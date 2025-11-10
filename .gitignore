@@ -1,0 +1,18 @@
+
+# Build
+bin/
+obj/
+out/
+
+# VS / Rider
+.vs/
+*.user
+*.suo
+*.userprefs
+.idea/
+
+# Logs
+*.log
+
+# Functions local settings (contains secrets)
+local.settings.json
