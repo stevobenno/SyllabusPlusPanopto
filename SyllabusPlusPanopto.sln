@@ -23,8 +23,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlus.Tests.Int", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlus.Tests.Unit", "SyllabusPlus.Tests.Unit\SyllabusPlus.Tests.Unit.csproj", "{AEFAE85B-2BB6-1E9D-7F47-3AA8494A7EBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlusPanopto.Domain", "SyllabusPlusPanopto.Domain\SyllabusPlusPanopto.Domain.csproj", "{166B90E1-054C-A932-0687-081588EB386A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlusPanopto.Infrastructure", "SyllabusPlusPanopto.Infrastructure\SyllabusPlusPanopto.Infrastructure.csproj", "{3A6B9C0F-B065-62FD-53A0-8DA08B83998F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlusPanopto.Shared", "SyllabusPlusPanopto.Shared\SyllabusPlusPanopto.Shared.csproj", "{24A0A172-0334-03CA-00A7-67386B4FCD89}"
@@ -73,10 +71,6 @@ Global
 		{AEFAE85B-2BB6-1E9D-7F47-3AA8494A7EBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEFAE85B-2BB6-1E9D-7F47-3AA8494A7EBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEFAE85B-2BB6-1E9D-7F47-3AA8494A7EBB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{166B90E1-054C-A932-0687-081588EB386A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{166B90E1-054C-A932-0687-081588EB386A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{166B90E1-054C-A932-0687-081588EB386A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{166B90E1-054C-A932-0687-081588EB386A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3A6B9C0F-B065-62FD-53A0-8DA08B83998F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3A6B9C0F-B065-62FD-53A0-8DA08B83998F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3A6B9C0F-B065-62FD-53A0-8DA08B83998F}.Release|Any CPU.ActiveCfg = Release|Any CPU

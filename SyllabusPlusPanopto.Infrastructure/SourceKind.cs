@@ -1,4 +1,4 @@
-﻿namespace SyllabusPlusPanopto.Infrastructure.Bootstrapping;
+﻿namespace SyllabusPlusPanopto.Infrastructure;
 
 public enum SourceKind
 {

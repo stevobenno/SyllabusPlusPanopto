@@ -1,11 +1,16 @@
 ﻿// SyllabusPlusPanopto.Console.Sync/Program.cs
-using System;
-using System.Threading.Tasks;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SyllabusPlusPanopto.Infrastructure.Bootstrapping;   // AddSyllabusPlusCommon, AddSourceFromConfiguration
-using SyllabusPlusPanopto.Application;                    // AddProcessFlow, IProcessFlow
+using SyllabusPlusPanopto.Infrastructure;
+using SyllabusPlusPanopto.Transform;
+using SyllabusPlusPanopto.Transform.Interfaces; // AddProcessFlow, IProcessFlow
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
+using SyllabusPlusPanopto.Transform.Telemetry;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration(c =>
@@ -20,7 +25,41 @@ var host = Host.CreateDefaultBuilder(args)
             .AddSourceFromConfiguration(ctx.Configuration);
 
         // Register only the process flow wrapper (no business logic here)
-        services.AddProcessFlow();
+      
+
+        // inside ConfigureServices
+        services.AddSingleton<IIntegrationTelemetry>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>().GetSection("Telemetry");
+            var useAi = config.GetValue<bool>("UseAppInsights");
+            var useTeams = config.GetValue<bool>("UseTeams");
+            var sinks = new List<IIntegrationTelemetry>();
+
+            if (useAi)
+            {
+                var tc = new Microsoft.ApplicationInsights.TelemetryClient(
+                    sp.GetRequiredService<TelemetryConfiguration>());
+                sinks.Add(new AppInsightsIntegrationTelemetry(tc));
+            }
+
+            if (useTeams)
+            {
+                var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+                var http = httpClientFactory.CreateClient("teams-telemetry");
+                var webhook = config.GetValue<string>("TeamsWebhookUrl");
+                sinks.Add(new TeamsWebhookIntegrationTelemetry(http, webhook));
+            }
+
+            // fall back to a no-op if nothing is enabled
+            if (sinks.Count == 0)
+                sinks.Add(new NoopIntegrationTelemetry());
+
+            return new CompositeIntegrationTelemetry(sinks);
+        });
+
+        // also remember
+        services.AddHttpClient("teams-telemetry");
+
     })
     .Build();
 

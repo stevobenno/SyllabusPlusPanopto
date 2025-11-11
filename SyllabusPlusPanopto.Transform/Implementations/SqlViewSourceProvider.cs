@@ -3,9 +3,10 @@ using System.Data;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Data.SqlClient;
-using SyllabusPlusPanopto.Domain;
+using SyllabusPlusPanopto.Transform.Domain;
 using SyllabusPlusPanopto.Transform.Interfaces;
-using SpRawRow = SyllabusPlusPanopto.Transform.SpRawRow;
+
+namespace SyllabusPlusPanopto.Transform.Implementations;
 
 public sealed class SqlViewSourceProvider : ISourceDataProvider
 {
@@ -13,7 +14,7 @@ public sealed class SqlViewSourceProvider : ISourceDataProvider
     private readonly string _view;
     public SqlViewSourceProvider(string conn, string view) { _conn = conn; _view = view; }
 
-    public async IAsyncEnumerable<SpRawRow> ReadAsync([EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<SourceEvent> ReadAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
         await using var con = new SqlConnection(_conn);
         await con.OpenAsync(ct);
@@ -22,7 +23,7 @@ public sealed class SqlViewSourceProvider : ISourceDataProvider
 
         while (await rdr.ReadAsync(ct))
         {
-            yield return new SpRawRow(
+            yield return new SourceEvent(
                 ModuleCode: rdr.GetString(rdr.GetOrdinal("ModuleCode")),
                 StartUtc: rdr.GetDateTime(rdr.GetOrdinal("StartUtc")),
                 EndUtc: rdr.GetDateTime(rdr.GetOrdinal("EndUtc")),

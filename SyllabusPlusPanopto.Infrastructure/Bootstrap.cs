@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SyllabusPlusPanopto.Transform.Implementations;
+using SyllabusPlusPanopto.Transform.Interfaces;
 // If your concrete providers live elsewhere, adjust the usings:
 // CsvSourceProvider, SqlViewSourceProvider, ApiSourceProvider
-using SyllabusPlusPanopto.Transform.Interfaces;
 
-namespace SyllabusPlusPanopto.Infrastructure.Bootstrapping
+namespace SyllabusPlusPanopto.Infrastructure
 {
     public static class Bootstrap
     {

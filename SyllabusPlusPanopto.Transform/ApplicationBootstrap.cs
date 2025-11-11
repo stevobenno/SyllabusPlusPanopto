@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using SyllabusPlusPanopto.Transform;
+using SyllabusPlusPanopto.Transform.Interfaces;
 
-namespace SyllabusPlusPanopto.Application;
+namespace SyllabusPlusPanopto.Transform;
 
 /// <summary>
 /// DI registration for the process flow only. No other services are registered here.

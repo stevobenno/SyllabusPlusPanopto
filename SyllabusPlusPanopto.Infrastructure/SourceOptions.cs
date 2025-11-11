@@ -1,4 +1,4 @@
-﻿namespace SyllabusPlusPanopto.Infrastructure.Bootstrapping;
+﻿namespace SyllabusPlusPanopto.Infrastructure;
 
 /// <summary>
 /// Configuration options for selecting and parameterising the source data provider.

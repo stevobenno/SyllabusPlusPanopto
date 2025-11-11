@@ -8,6 +8,8 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.24.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SyllabusPlusPanopto.Infrastructure\SyllabusPlusPanopto.Infrastructure.csproj" />
+    <ProjectReference Include="..\SyllabusPlusPanopto.Shared\SyllabusPlusPanopto.Shared.csproj" />
     <ProjectReference Include="..\SyllabusPlusPanopto.Transform\SyllabusPlusPanopto.Transform.csproj" />
   </ItemGroup>
 </Project>
