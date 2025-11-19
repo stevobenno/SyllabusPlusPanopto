@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SyllabusPlusPanopto.Transform.Interfaces;
+using SyllabusPlusPanopto.Transform.To_Sort;
 
 namespace SyllabusPlusPanopto.Transform
 {
@@ -38,11 +39,23 @@ namespace SyllabusPlusPanopto.Transform
             var success = 0;
             var failed = 0;
 
+            var runCtx = new SyncRunContext(
+                DryRun: dryRun,
+                MinExpectedRows: null,      // or pull from config
+                AllowDeletions: true,       // may be flipped false in CompleteRunAsync if low-water hit
+                DeleteHorizonDays: 7,       // TODO: pull this stevie
+                RunId: Guid.NewGuid().ToString("n"),
+                UtcNow: DateTime.UtcNow,
+                DateTime.UtcNow, DateTime.UtcNow
+
+            );
+
             // TODO: if the provider can tell us "I will return N rows", fetch that first
             // and apply the "plausibility / minimum threshold" rule from the design
             // (ISPEC §6.3). For now we just stream.
+            await _sync.BeginRunAsync(runCtx, ct);
 
-            await foreach (var raw in _reader.ReadAsync(ct))
+            await foreach (var sourceEvent in _reader.ReadAsync(ct))
             {
                 ct.ThrowIfCancellationRequested();
                 count++;
@@ -50,7 +63,7 @@ namespace SyllabusPlusPanopto.Transform
                 try
                 {
                     // 1. transform S+ row to canonical DTO (Automapper profile)
-                    var mapped = _transform.Transform(raw);
+                    var mapped = _transform.Transform(sourceEvent);
 
                     if (dryRun)
                     {
@@ -75,7 +88,7 @@ namespace SyllabusPlusPanopto.Transform
                     _log.LogError(ex,
                         "Failed to process row #{Row}. RawId={RawId}",
                         count,
-                        raw?.Id /* or whatever field identifies the S+ row */);
+                        sourceEvent?.StaffName /* or whatever field identifies the S+ row - TODO */);
                     // continue with the next item
                 }
 
@@ -85,6 +98,8 @@ namespace SyllabusPlusPanopto.Transform
                         count, success, failed);
                 }
             }
+
+            await _sync.CompleteRunAsync(ct);
 
             // TODO: at this point apply the "if count < MinExpectedRowos ⇒ raise alert and
             // DO NOT apply deletions" rule. Right now we just log.

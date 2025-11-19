@@ -3,8 +3,6 @@ using System;
 using SyllabusPlusPanopto.Transform.Domain;
 using SyllabusPlusPanopto.Transform.TransformationServices.Mappers.MapHelpersResolversBuilders;
 
-// wherever SpRawRow lives
-
 namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers
 {
     /// <summary>
@@ -104,10 +102,7 @@ namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers
                 //   - otherwise convention-based module folder name, else default
                 // ------------------------------------------------------------------
                 .ForMember(d => d.FolderName,
-                    m => m.MapFrom(s =>
-                        FolderNameBuilder.FromSyllabusPlus(
-                            moduleCrn: s.ModuleCRN,
-                            staffUser: s.StaffUserName)))
+                    m => m.MapFrom(s => FolderNameBuilder.FromSyllabusPlus(s.ModuleCRN, s.StaffUserName)))
 
                 // ------------------------------------------------------------------
                 // WEBCAST FLAG
@@ -122,8 +117,7 @@ namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers
                 // So: webcast = 1 when factor is 4 or 5, else 0.
                 // ------------------------------------------------------------------
                 .ForMember(d => d.Webcast,
-                    m => m.MapFrom(s =>
-                        RecordingFactorMapper.ToWebcastFlag(s.RecordingFactor)))
+                    m => m.MapFrom(s => RecordingFactorMapper.ToWebcastFlag(s.RecordingFactor)))
 
                 // ------------------------------------------------------------------
                 // OWNER
@@ -134,9 +128,14 @@ namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers
                 //       take first StaffUserName (before comma), prepend "unified\"
                 // ------------------------------------------------------------------
                 .ForMember(d => d.Owner,
-                    m => m.MapFrom(s =>
-                        OwnerResolver.ResolveOwner(s.StaffUserName)))
-                ;
+                    m => m.MapFrom(s => OwnerResolver.ResolveOwner(s.StaffUserName)))
+
+                // ------------------------------------------------------------------
+                // RAW SOURCE & HASH
+                // Keep the raw source for auditing, and ignore Hash (computed later).
+                // ------------------------------------------------------------------
+                .ForMember(d => d.Raw, m => m.MapFrom(s => s))
+                .ForMember(d => d.Hash, m => m.Ignore());
         }
 
         private static string FirstToken(string input)
@@ -146,7 +145,4 @@ namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers
             return idx > 0 ? input[..idx].Trim() : input.Trim();
         }
     }
-
-   
 }
-

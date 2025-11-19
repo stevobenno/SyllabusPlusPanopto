@@ -1,7 +1,6 @@
 ﻿// SyllabusPlusPanopto.Infrastructure/Telemetry/AppInsightsIntegrationTelemetry.cs
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.IdentityModel.Abstractions;
 using SyllabusPlusPanopto.Transform.Domain;
 using System;
 using SyllabusPlusPanopto.Transform.Interfaces;

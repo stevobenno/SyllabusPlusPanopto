@@ -14,6 +14,8 @@ public static class ApplicationBootstrap
         //  - Reader is added via Infrastructure.AddSourceFromConfiguration(...)
         //  - Transform and Sync are added by their own projects' bootstrappers
         services.AddSingleton<IProcessFlow, ProcessFlow>();
+
+
         return services;
     }
 }

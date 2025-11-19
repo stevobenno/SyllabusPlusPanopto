@@ -1,4 +1,6 @@
-﻿namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers.MapHelpersResolversBuilders
+﻿using System;
+
+namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers.MapHelpersResolversBuilders
 {
     /// <summary>
     /// Workbook rule:

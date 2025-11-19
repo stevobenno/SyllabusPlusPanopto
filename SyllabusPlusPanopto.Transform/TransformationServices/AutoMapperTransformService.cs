@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using SyllabusPlusPanopto.Domain;
 using SyllabusPlusPanopto.Transform.Domain;
 using SyllabusPlusPanopto.Transform.Interfaces;
 using System.Collections.Generic;
@@ -16,11 +15,11 @@ namespace SyllabusPlusPanopto.Transform.TransformationServices
             _mapper = mapper;
         }
 
-        public ScheduledSession Transform(SourceEvent row)
+        public ScheduledSession Transform(SourceEvent sourceEvent)
         {
-            var dto = _mapper.Map<ScheduledSession>(row);
-            dto.Raw = row; // keep original for audit/troubleshooting
-            return dto;
+            var scheduledSession = _mapper.Map<ScheduledSession>(sourceEvent);
+            scheduledSession.Raw = sourceEvent; // keep original for audit/troubleshooting
+            return scheduledSession;
         }
 
         public IReadOnlyList<ScheduledSession> Transform(IEnumerable<SourceEvent> rows)

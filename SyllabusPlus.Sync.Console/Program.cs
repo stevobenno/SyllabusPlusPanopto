@@ -3,13 +3,11 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SyllabusPlusPanopto.Infrastructure;
-using SyllabusPlusPanopto.Transform;
 using SyllabusPlusPanopto.Transform.Interfaces; // AddProcessFlow, IProcessFlow
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Threading.Tasks;
+using SyllabusPlusPanopto.Transform.Domain.Settings;
 using SyllabusPlusPanopto.Transform.Telemetry;
 
 var host = Host.CreateDefaultBuilder(args)
@@ -20,12 +18,12 @@ var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((ctx, services) =>
     {
         // Common infra (http factory, options) + source provider chosen via config (Csv | SqlView | Api)
-        services
-            .AddSyllabusPlusCommon(ctx.Configuration)
-            .AddSourceFromConfiguration(ctx.Configuration);
+        //services
+        //    .AddSyllabusPlusCommon(ctx.Configuration)
+        //    .AddSourceFromConfiguration(ctx.Configuration);
 
         // Register only the process flow wrapper (no business logic here)
-      
+
 
         // inside ConfigureServices
         services.AddSingleton<IIntegrationTelemetry>(sp =>
@@ -57,6 +55,11 @@ var host = Host.CreateDefaultBuilder(args)
             return new CompositeIntegrationTelemetry(sinks);
         });
 
+
+        services.AddSingleton<IPanoptoBindingFactory, PanoptoBindingFactory>();
+
+        services.Configure<PanoptoSettings>(
+            ctx.Configuration.GetSection("Panopto"));
         // also remember
         services.AddHttpClient("teams-telemetry");
 
