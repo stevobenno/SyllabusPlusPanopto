@@ -1,73 +1,52 @@
-﻿// SyllabusPlusPanopto.Console.Sync/Program.cs
-using Microsoft.ApplicationInsights.Extensibility;
+﻿using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SyllabusPlusPanopto.Transform.Interfaces; // AddProcessFlow, IProcessFlow
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using SyllabusPlusPanopto.Transform.Domain.Settings;
-using SyllabusPlusPanopto.Transform.Telemetry;
+using Microsoft.Extensions.Logging;
+using SyllabusPlusPanopto.Shared;
+using SyllabusPlusPanopto.Transform;
+
 
 var host = Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration(c =>
+    .ConfigureAppConfiguration((ctx, config) =>
     {
-        c.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .AddCommandLine(args);
     })
     .ConfigureServices((ctx, services) =>
     {
-        // Common infra (http factory, options) + source provider chosen via config (Csv | SqlView | Api)
-        //services
-        //    .AddSyllabusPlusCommon(ctx.Configuration)
-        //    .AddSourceFromConfiguration(ctx.Configuration);
-
-        // Register only the process flow wrapper (no business logic here)
-
-
-        // inside ConfigureServices
-        services.AddSingleton<IIntegrationTelemetry>(sp =>
+        // Console logging
+        services.AddLogging(b =>
         {
-            var config = sp.GetRequiredService<IConfiguration>().GetSection("Telemetry");
-            var useAi = config.GetValue<bool>("UseAppInsights");
-            var useTeams = config.GetValue<bool>("UseTeams");
-            var sinks = new List<IIntegrationTelemetry>();
-
-            if (useAi)
+            b.ClearProviders();
+            b.AddSimpleConsole(o =>
             {
-                var tc = new Microsoft.ApplicationInsights.TelemetryClient(
-                    sp.GetRequiredService<TelemetryConfiguration>());
-                sinks.Add(new AppInsightsIntegrationTelemetry(tc));
-            }
-
-            if (useTeams)
-            {
-                var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-                var http = httpClientFactory.CreateClient("teams-telemetry");
-                var webhook = config.GetValue<string>("TeamsWebhookUrl");
-                sinks.Add(new TeamsWebhookIntegrationTelemetry(http, webhook));
-            }
-
-            // fall back to a no-op if nothing is enabled
-            if (sinks.Count == 0)
-                sinks.Add(new NoopIntegrationTelemetry());
-
-            return new CompositeIntegrationTelemetry(sinks);
+                o.ColorBehavior = Microsoft.Extensions.Logging.Console.LoggerColorBehavior.Enabled;
+                o.TimestampFormat = "[HH:mm:ss] ";
+            });
         });
 
-
-        services.AddSingleton<IPanoptoBindingFactory, PanoptoBindingFactory>();
-
-        services.Configure<PanoptoSettings>(
-            ctx.Configuration.GetSection("Panopto"));
-        // also remember
-        services.AddHttpClient("teams-telemetry");
-
+        // Shared integration bootstrap
+        services.AddSyllabusPlusPanoptoSync(ctx.Configuration);
     })
     .Build();
 
-// Parse --dryRun without pulling in LINQ
-var dryRun = Array.Exists(args, a => string.Equals(a, "--dryRun", StringComparison.OrdinalIgnoreCase));
+var log = host.Services.GetRequiredService<ILoggerFactory>()
+    .CreateLogger("ConsoleHost");
 
-// Execute the shared Read → Transform → Sync flow
-await host.Services.GetRequiredService<IProcessFlow>().RunAsync(dryRun);
+log.LogInformation("Starting SyllabusPlus → Panopto sync...");
+
+try
+{
+    var orchestrator = host.Services.GetRequiredService<TimetabledEventSyncOrchestrator>();
+
+    // Run a single sync cycle
+    await orchestrator.RunAsync();
+
+    log.LogInformation("Sync completed successfully.");
+}
+catch (Exception ex)
+{
+    log.LogError(ex, "The sync process failed.");
+}

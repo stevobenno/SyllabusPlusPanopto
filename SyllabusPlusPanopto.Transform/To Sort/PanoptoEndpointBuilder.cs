@@ -1,6 +1,8 @@
 ﻿using System;
 using System.ServiceModel;
 
+namespace SyllabusPlusPanopto.Transform.To_Sort;
+
 public static class PanoptoEndpointBuilder
 {
     public static EndpointAddress BuildEndpoint(string baseUrl, string relativePath)

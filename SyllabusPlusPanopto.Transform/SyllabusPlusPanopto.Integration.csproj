@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Remove="ApiWrappers\RemoteRecorderManagementWrapper.cs~RF48485a51.TMP" />
+    <None Remove="To Sort\x1i2in1q.4ws~" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" />

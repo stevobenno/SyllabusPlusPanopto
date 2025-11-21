@@ -4,6 +4,7 @@ using System.Linq;
 using System.ServiceModel;
 using Microsoft.Extensions.Options;
 using SessionManagement;
+using SyllabusPlusPanopto.Transform.Domain.Settings;
 using SyllabusPlusPanopto.Transform.To_Sort;
 using UsageReporting;
 using AuthenticationInfo = UsageReporting.AuthenticationInfo;
@@ -19,10 +20,10 @@ namespace SyllabusPlusPanopto.Transform.ApiWrappers
     {
         private readonly UsageReportingClient _usageManager;
         private readonly AuthenticationInfo _authentication;
-        private readonly PanoptoSettings _settings;
+        private readonly PanoptoOptions _settings;
 
         public UsageManagementWrapper(
-            IOptions<PanoptoSettings> panoptoOptions,
+            IOptions<PanoptoOptions> panoptoOptions,
             IPanoptoBindingFactory bindingFactory)
         {
             _settings = panoptoOptions.Value;

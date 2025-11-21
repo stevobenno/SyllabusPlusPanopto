@@ -6,7 +6,7 @@ namespace SyllabusPlusPanopto.Transform.Interfaces;
 /// <summary>
 /// Thin orchestration contract used by both Console and Functions hosts.
 /// </summary>
-public interface IProcessFlow
+public interface ITimetabledEventSyncOrchestrator
 {
-    Task RunAsync(bool dryRun = false, CancellationToken ct = default);
+    Task RunAsync( CancellationToken ct = default);
 }

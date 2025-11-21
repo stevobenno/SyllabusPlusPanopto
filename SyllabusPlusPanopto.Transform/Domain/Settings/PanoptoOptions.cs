@@ -1,6 +1,6 @@
-﻿using SyllabusPlusPanopto.Transform.Domain.Settings;
+﻿namespace SyllabusPlusPanopto.Transform.Domain.Settings;
 
-public class PanoptoSettings
+public sealed class PanoptoOptions
 {
     public string BaseUrl { get; set; }
 
@@ -14,6 +14,6 @@ public class PanoptoSettings
 
     public string DateTimeFormat { get; set; } = "dd-MMM-yyyy hh:mm tt";
 
-    public NotifyOptions Notify { get; set; } = new();
+    public PanoptoNotifyOptions Notify { get; set; } = new();
     public PanoptoBindingOptions Binding { get; set; } = new();
 }

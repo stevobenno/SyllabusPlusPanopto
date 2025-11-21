@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using SessionManagement;
+using SyllabusPlusPanopto.Transform.Domain.Settings;
+using SyllabusPlusPanopto.Transform.Interfaces.ApiWrappers;
 using SyllabusPlusPanopto.Transform.To_Sort;
 using System;
 using System.Collections.Generic;
@@ -11,21 +13,21 @@ using System.Text.RegularExpressions;
 
 namespace SyllabusPlusPanopto.Transform.ApiWrappers
 {
-    public class SessionManagementWrapper : IDisposable
+    public class SessionManagementWrapper : IDisposable, ISessionManagementWrapper
     {
         private const int ResultsPerPage = 250; // Max is 10,000
 
         private readonly AuthenticationInfo _authentication;
 
-        private readonly IOptions<PanoptoSettings> _panoptoOptions;
+        private readonly IOptions<PanoptoOptions> _panoptoOptions;
         private readonly IPanoptoBindingFactory _bindingFactory;
         private readonly SessionManagementClient _sessionManager;
-        private readonly PanoptoSettings _settings;
+        private readonly PanoptoOptions _settings;
 
         private readonly Dictionary<string, Folder> _folderByNameCache;
         private readonly Dictionary<Guid, Folder> _folderByIdCache;
         public SessionManagementWrapper(
-            IOptions<PanoptoSettings> panoptoOptions,
+            IOptions<PanoptoOptions> panoptoOptions,
             IPanoptoBindingFactory bindingFactory)
         {
             _panoptoOptions = panoptoOptions;

@@ -10,6 +10,11 @@
   <ItemGroup>
     <ProjectReference Include="..\SyllabusPlusPanopto.Infrastructure\SyllabusPlusPanopto.Infrastructure.csproj" />
     <ProjectReference Include="..\SyllabusPlusPanopto.Shared\SyllabusPlusPanopto.Shared.csproj" />
-    <ProjectReference Include="..\SyllabusPlusPanopto.Transform\SyllabusPlusPanopto.Transform.csproj" />
+    <ProjectReference Include="..\SyllabusPlusPanopto.Transform\SyllabusPlusPanopto.Integration.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

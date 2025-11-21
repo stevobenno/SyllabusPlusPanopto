@@ -1,16 +1,62 @@
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using SyllabusPlusPanopto.Transform;
+using SyllabusPlusPanopto.Transform.ApiWrappers;
+using SyllabusPlusPanopto.Transform.Domain.Settings;
+using SyllabusPlusPanopto.Transform.Implementations;
+using SyllabusPlusPanopto.Transform.Interfaces;
+using SyllabusPlusPanopto.Transform.Interfaces.ApiWrappers;
+using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+using SyllabusPlusPanopto.Transform.To_Sort;
+using System;
+
+
+// SoapPanoptoPlatform etc.
 
 namespace SyllabusPlusPanopto.Shared;
 
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-
-public static class ServiceRegistration
+public static class SyncServiceRegistration
 {
-    public static IServiceCollection AddShared(this IServiceCollection services, IConfiguration config)
+    public static IServiceCollection AddSyllabusPlusPanoptoSync(
+        this IServiceCollection services,
+        IConfiguration config)
     {
-        services.AddLogging(builder => builder.AddConsole());
-        services.AddOptions();
+        // Bind options
+        services.Configure<SourceOptions>(config.GetSection("Source"));
+        services.Configure<PanoptoOptions>(config.GetSection("Panopto"));
+
+        // Decide input source (this is where your SourceKind enum is used)
+        var sourceKind = config.GetValue<SourceKind>("Source:Kind");
+
+        switch (sourceKind)
+        {
+            case SourceKind.Csv:
+                services.AddSingleton<ISourceDataProvider, CsvSourceProvider>();
+                break;
+
+            case SourceKind.Sql:
+                services.AddSingleton<ISourceDataProvider, SqlViewSourceProvider>();
+                break;
+
+            case SourceKind.Api:
+                services.AddHttpClient<ISourceDataProvider, ApiSourceProvider>();
+                break;
+
+            default:
+                throw new InvalidOperationException($"Unsupported SourceKind '{sourceKind}'.");
+        }
+
+        // Panopto SOAP wrappers (your existing classes)
+        services.AddSingleton<ISessionManagementWrapper, SessionManagementWrapper>();
+        services.AddSingleton<IRemoteRecorderManagementWrapper, RemoteRecorderManagementWrapper>();
+        // or just the wrappers themselves if they’re not factories yet
+
+        // Higher-level abstraction
+        services.AddSingleton<IPanoptoPlatform, SoapPanoptoPlatform>();
+
+        // Orchestrator that the host actually calls
+        services.AddSingleton<TimetabledEventSyncOrchestrator>();
+
         return services;
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using Microsoft.Extensions.Options;
+using SyllabusPlusPanopto.Transform.Domain.Settings;
 using SyllabusPlusPanopto.Transform.To_Sort;
 using UserManagement;
 
@@ -12,12 +13,12 @@ namespace SyllabusPlusPanopto.Transform.ApiWrappers
     {
         private readonly UserManagementClient _userManager;
         private readonly AuthenticationInfo _authentication;
-        private readonly Dictionary<Guid, User> _userByIdCache = new();
-        private readonly PanoptoSettings _settings;
+        private readonly Dictionary<Guid, User> _userByIdCache;
+        private readonly PanoptoOptions _settings;
         private readonly Dictionary<string, User> _userByEmailCache;
 
         public UserManagementWrapper(
-            IOptions<PanoptoSettings> panoptoOptions,
+            IOptions<PanoptoOptions> panoptoOptions,
             IPanoptoBindingFactory bindingFactory)
         {
             _settings = panoptoOptions.Value;

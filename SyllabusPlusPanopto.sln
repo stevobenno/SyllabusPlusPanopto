@@ -27,7 +27,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlusPanopto.Infrast
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlusPanopto.Shared", "SyllabusPlusPanopto.Shared\SyllabusPlusPanopto.Shared.csproj", "{24A0A172-0334-03CA-00A7-67386B4FCD89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlusPanopto.Transform", "SyllabusPlusPanopto.Transform\SyllabusPlusPanopto.Transform.csproj", "{690A0E93-BE62-30B3-EA45-18FC1909F230}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyllabusPlusPanopto.Integration", "SyllabusPlusPanopto.Transform\SyllabusPlusPanopto.Integration.csproj", "{690A0E93-BE62-30B3-EA45-18FC1909F230}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sync", "Sync", "{41BD9588-2C57-45A2-8FB2-1512E500F2E9}"
 EndProject

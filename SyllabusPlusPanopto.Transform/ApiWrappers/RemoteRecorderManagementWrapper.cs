@@ -18,7 +18,7 @@ namespace SyllabusPlusPanopto.Transform.ApiWrappers
 {
     public class RemoteRecorderManagementWrapper : IDisposable, IRemoteRecorderManagementWrapper
     {
-        private readonly IOptions<PanoptoSettings> _panoptoOptions;
+        private readonly IOptions<PanoptoOptions> _panoptoOptions;
         private readonly IPanoptoBindingFactory _bindingFactory;
         private readonly RemoteRecorderManagementClient _remoteRecorderManager;
 
@@ -26,7 +26,7 @@ namespace SyllabusPlusPanopto.Transform.ApiWrappers
         private readonly string _dateTimeFormat;
         private Dictionary<string, RemoteRecorder> _recorders;
         private readonly object _lockRecorders = new object();
-        private readonly PanoptoSettings _settings;
+        private readonly PanoptoOptions _settings;
 
         // RemoteRecorderManagement.ListRecorders() (Gets the list of all recorders and allows filtering by recorder name.)
         // RemoteRecorderManagement.ScheduleRecording() (Creates a new recording on a particular remote recorder.)
@@ -34,7 +34,7 @@ namespace SyllabusPlusPanopto.Transform.ApiWrappers
 
 
         public RemoteRecorderManagementWrapper(
-            IOptions<PanoptoSettings> panoptoOptions,
+            IOptions<PanoptoOptions> panoptoOptions,
             IPanoptoBindingFactory bindingFactory)
         {
             _panoptoOptions = panoptoOptions;
