@@ -1,4 +1,4 @@
-﻿namespace SyllabusPlusPanopto.Transform.ApiWrappers
+﻿namespace SyllabusPlusPanopto.Integration.ApiWrappers
 {
     public class SessionUsage
     {

@@ -4,22 +4,33 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.Interfaces;
+using Microsoft.Extensions.Options;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
+using SyllabusPlusPanopto.Integration.Interfaces;
 
-namespace SyllabusPlusPanopto.Transform.Implementations
+namespace SyllabusPlusPanopto.Integration.Implementations
 {
     public sealed class CsvSourceProvider : ISourceDataProvider
     {
         private readonly string _path;
 
-        public CsvSourceProvider(string path) => _path = path;
+        public CsvSourceProvider(IOptions<SourceOptions> options)
+        {
+            if (options?.Value == null)
+                throw new ArgumentNullException(nameof(options));
 
-        public async IAsyncEnumerable<SourceEvent> ReadAsync([EnumeratorCancellation] CancellationToken ct = default)
+            if (string.IsNullOrWhiteSpace(options.Value.CsvPath))
+                throw new InvalidOperationException("Source.CsvPath must be configured for Csv source.");
+
+            _path = options.Value.CsvPath!;
+        }
+
+        public async IAsyncEnumerable<SourceEvent> ReadAsync(
+            [EnumeratorCancellation] CancellationToken ct = default)
         {
             using var reader = File.OpenText(_path);
 
-            // Read and index the header row
             var headerLine = await reader.ReadLineAsync(ct);
             if (headerLine is null) yield break;
 
@@ -36,22 +47,16 @@ namespace SyllabusPlusPanopto.Transform.Implementations
 
                 string Get(string name) => TryGet(cols, index, name);
 
-                DateTime ParseDate(string name)
-                {
-                    var raw = Get(name);
-                    return DateTime.Parse(raw, CultureInfo.InvariantCulture);
-                }
+                DateTime ParseDate(string name) =>
+                    DateTime.Parse(Get(name), CultureInfo.InvariantCulture);
 
-                TimeSpan ParseTime(string name)
-                {
-                    var raw = Get(name);
-                    return TimeSpan.Parse(raw, CultureInfo.InvariantCulture);
-                }
+                TimeSpan ParseTime(string name) =>
+                    TimeSpan.Parse(Get(name), CultureInfo.InvariantCulture);
 
                 int ParseInt(string name)
                 {
                     var raw = Get(name);
-                    return int.TryParse(raw, out var val) ? val : 0;
+                    return int.TryParse(raw, out var n) ? n : 0;
                 }
 
                 yield return new SourceEvent(
@@ -74,7 +79,7 @@ namespace SyllabusPlusPanopto.Transform.Implementations
         private static Dictionary<string, int> BuildIndex(string[] headers)
         {
             var dict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            for (int i = 0; i < headers.Length; i++)
+            for (var i = 0; i < headers.Length; i++)
             {
                 if (!string.IsNullOrWhiteSpace(headers[i]))
                     dict[headers[i]] = i;
@@ -86,6 +91,7 @@ namespace SyllabusPlusPanopto.Transform.Implementations
         {
             if (index.TryGetValue(name, out var i) && i >= 0 && i < cols.Length)
                 return cols[i].Trim();
+
             return string.Empty;
         }
     }

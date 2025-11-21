@@ -1,17 +1,16 @@
-﻿using Microsoft.Extensions.Options;
-using SessionManagement;
-using SyllabusPlusPanopto.Transform.Domain.Settings;
-using SyllabusPlusPanopto.Transform.Interfaces.ApiWrappers;
-using SyllabusPlusPanopto.Transform.To_Sort;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.ServiceModel;
-using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Options;
+using SessionManagement;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
+using SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
+using SyllabusPlusPanopto.Integration.To_Sort;
 
-namespace SyllabusPlusPanopto.Transform.ApiWrappers
+namespace SyllabusPlusPanopto.Integration.ApiWrappers
 {
     public class SessionManagementWrapper : IDisposable, ISessionManagementWrapper
     {

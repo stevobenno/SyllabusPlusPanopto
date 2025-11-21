@@ -1,10 +1,10 @@
-﻿using AutoMapper;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.Interfaces;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces;
 
-namespace SyllabusPlusPanopto.Transform.TransformationServices
+namespace SyllabusPlusPanopto.Integration.TransformationServices
 {
     public sealed class AutoMapperTransformService : ITransformService
     {

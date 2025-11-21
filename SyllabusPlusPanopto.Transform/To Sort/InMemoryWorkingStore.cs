@@ -1,12 +1,12 @@
-﻿using SyllabusPlusPanopto.Transform.Interfaces;
-using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using SyllabusPlusPanopto.Integration.Interfaces;
+using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort
+namespace SyllabusPlusPanopto.Integration.To_Sort
 {
     /// <summary>
     /// Run-scoped, in-memory working set seeded from Panopto at BeginRun.

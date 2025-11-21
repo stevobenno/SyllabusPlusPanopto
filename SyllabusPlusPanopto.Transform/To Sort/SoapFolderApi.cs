@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using SyllabusPlusPanopto.Transform.ApiWrappers;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+using SyllabusPlusPanopto.Integration.ApiWrappers;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort;
+namespace SyllabusPlusPanopto.Integration.To_Sort;
 
 internal sealed class SoapFolderApi : IFolderApi
 {

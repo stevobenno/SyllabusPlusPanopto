@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.Interfaces;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces;
 
-namespace SyllabusPlusPanopto.Transform.Telemetry
+namespace SyllabusPlusPanopto.Integration.Telemetry
 {
     /// <summary>
     /// Fans out telemetry calls to one or more underlying sinks

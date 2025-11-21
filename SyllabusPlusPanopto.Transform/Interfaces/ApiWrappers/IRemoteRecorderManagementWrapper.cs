@@ -1,8 +1,8 @@
 ﻿using System;
 using RemoteRecorderManagement;
-using SyllabusPlusPanopto.Transform.ApiWrappers;
+using SyllabusPlusPanopto.Integration.ApiWrappers;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces.ApiWrappers;
+namespace SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
 
 public interface IRemoteRecorderManagementWrapper
 {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SyllabusPlusPanopto.Transform.Domain
+namespace SyllabusPlusPanopto.Integration.Domain
 {
     /// <summary>
     /// Represents one raw record extracted from the Argos/Syllabus Plus reporting view.

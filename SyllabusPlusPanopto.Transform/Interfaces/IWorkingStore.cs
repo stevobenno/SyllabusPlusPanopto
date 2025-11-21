@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces
+namespace SyllabusPlusPanopto.Integration.Interfaces
 {
     /// <summary>
     /// Run-scoped working set. No persistence; seeded from Panopto at BeginRun.

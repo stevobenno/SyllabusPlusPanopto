@@ -1,9 +1,9 @@
-﻿using AutoMapper;
-using System;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.TransformationServices.Mappers.MapHelpersResolversBuilders;
+﻿using System;
+using AutoMapper;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.TransformationServices.Mappers.MapHelpersResolversBuilders;
 
-namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers
+namespace SyllabusPlusPanopto.Integration.TransformationServices.Mappers
 {
     /// <summary>
     /// Maps the Argos / S+ CSV row into the canonical scheduling DTO

@@ -1,20 +1,18 @@
-﻿using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Protocols;
-using RemoteRecorderManagement;
-using SessionManagement;
-using SyllabusPlusPanopto.Transform.Domain.Settings;
-using SyllabusPlusPanopto.Transform.Interfaces.ApiWrappers;
-using SyllabusPlusPanopto.Transform.To_Sort;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceModel;
 using System.Threading;
+using Microsoft.Extensions.Options;
+using RemoteRecorderManagement;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
+using SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
+using SyllabusPlusPanopto.Integration.To_Sort;
 using AuthenticationInfo = RemoteRecorderManagement.AuthenticationInfo;
 using Pagination = RemoteRecorderManagement.Pagination;
 
-namespace SyllabusPlusPanopto.Transform.ApiWrappers
+namespace SyllabusPlusPanopto.Integration.ApiWrappers
 {
     public class RemoteRecorderManagementWrapper : IDisposable, IRemoteRecorderManagementWrapper
     {

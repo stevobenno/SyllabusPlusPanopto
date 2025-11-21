@@ -4,12 +4,12 @@ using System.Linq;
 using System.ServiceModel;
 using Microsoft.Extensions.Options;
 using SessionManagement;
-using SyllabusPlusPanopto.Transform.Domain.Settings;
-using SyllabusPlusPanopto.Transform.To_Sort;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
+using SyllabusPlusPanopto.Integration.To_Sort;
 using UsageReporting;
 using AuthenticationInfo = UsageReporting.AuthenticationInfo;
 
-namespace SyllabusPlusPanopto.Transform.ApiWrappers
+namespace SyllabusPlusPanopto.Integration.ApiWrappers
 {
     public interface IUsageManagementWrapper : IDisposable
     {

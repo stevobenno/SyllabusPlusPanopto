@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SyllabusPlusPanopto.Transform.Domain;
+namespace SyllabusPlusPanopto.Integration.Domain;
 
 /// <summary>
 /// Minimal recorder identity used by scheduling.

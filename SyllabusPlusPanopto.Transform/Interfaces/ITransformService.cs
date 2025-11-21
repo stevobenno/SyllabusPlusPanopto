@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using SyllabusPlusPanopto.Transform.Domain;
+using SyllabusPlusPanopto.Integration.Domain;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces
+namespace SyllabusPlusPanopto.Integration.Interfaces
 {
     /// <summary>
     /// Defines a transformer that converts raw Syllabus Plus / Argos source events

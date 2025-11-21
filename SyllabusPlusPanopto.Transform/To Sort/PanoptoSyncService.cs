@@ -4,11 +4,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.Interfaces;
-using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces;
+using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort
+namespace SyllabusPlusPanopto.Integration.To_Sort
 {
     public sealed class PanoptoSyncService : ISyncService
     {

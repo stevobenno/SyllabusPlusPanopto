@@ -1,11 +1,12 @@
 ﻿// SyllabusPlusPanopto.Infrastructure/Telemetry/AppInsightsIntegrationTelemetry.cs
+
+using System;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using SyllabusPlusPanopto.Transform.Domain;
-using System;
-using SyllabusPlusPanopto.Transform.Interfaces;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces;
 
-namespace SyllabusPlusPanopto.Transform.Telemetry
+namespace SyllabusPlusPanopto.Integration.Telemetry
 {
     /// <summary>
     /// Application Insights-backed telemetry sink.

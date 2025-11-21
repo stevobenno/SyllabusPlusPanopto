@@ -1,4 +1,4 @@
-﻿namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers
+﻿namespace SyllabusPlusPanopto.Integration.TransformationServices.Mappers
 {
     /// <summary>
     /// S+ "Factor" values from the sheet:

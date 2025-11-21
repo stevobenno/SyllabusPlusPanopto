@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces;
+namespace SyllabusPlusPanopto.Integration.Interfaces;
 
 /// <summary>
 /// Thin orchestration contract used by both Console and Functions hosts.

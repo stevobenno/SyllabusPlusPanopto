@@ -1,6 +1,6 @@
-﻿using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+﻿using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort;
+namespace SyllabusPlusPanopto.Integration.To_Sort;
 
 /// <summary>
 /// Placeholder REST-backed Panopto implementation.

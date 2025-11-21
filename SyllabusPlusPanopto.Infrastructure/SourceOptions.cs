@@ -1,4 +1,6 @@
-﻿namespace SyllabusPlusPanopto.Infrastructure;
+﻿using SyllabusPlusPanopto.Integration.Domain.Settings;
+
+namespace SyllabusPlusPanopto.Infrastructure;
 
 /// <summary>
 /// Configuration options for selecting and parameterising the source data provider.

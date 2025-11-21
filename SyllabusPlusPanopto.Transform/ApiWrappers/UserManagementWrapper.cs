@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
 using Microsoft.Extensions.Options;
-using SyllabusPlusPanopto.Transform.Domain.Settings;
-using SyllabusPlusPanopto.Transform.To_Sort;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
+using SyllabusPlusPanopto.Integration.To_Sort;
 using UserManagement;
 
-namespace SyllabusPlusPanopto.Transform.ApiWrappers
+namespace SyllabusPlusPanopto.Integration.ApiWrappers
 {
     public class UserManagementWrapper : IDisposable
     {

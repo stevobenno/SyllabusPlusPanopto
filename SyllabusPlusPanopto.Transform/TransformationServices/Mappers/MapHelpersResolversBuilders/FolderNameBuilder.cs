@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers.MapHelpersResolversBuilders
+namespace SyllabusPlusPanopto.Integration.TransformationServices.Mappers.MapHelpersResolversBuilders
 {
     /// <summary>
     /// Mirrors the big LET() folder formula from the workbook, but in our

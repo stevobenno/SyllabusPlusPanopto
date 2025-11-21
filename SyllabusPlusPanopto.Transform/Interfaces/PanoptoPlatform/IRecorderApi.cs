@@ -1,8 +1,8 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using SyllabusPlusPanopto.Transform.Domain;
+using SyllabusPlusPanopto.Integration.Domain;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+namespace SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
 /// <summary>
 /// Recorder discovery and lookup.

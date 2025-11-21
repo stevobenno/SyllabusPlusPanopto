@@ -1,7 +1,7 @@
 ﻿using System;
 using SessionManagement;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces.ApiWrappers;
+namespace SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
 
 public interface ISessionManagementWrapper
 {

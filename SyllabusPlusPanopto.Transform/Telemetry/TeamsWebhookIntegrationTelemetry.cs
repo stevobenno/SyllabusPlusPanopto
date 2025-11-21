@@ -2,10 +2,10 @@
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.Interfaces;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces;
 
-namespace SyllabusPlusPanopto.Transform.Telemetry
+namespace SyllabusPlusPanopto.Integration.Telemetry
 {
     /// <summary>
     /// Sends high-level integration events to a Teams channel via an incoming webhook.

@@ -5,10 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using RemoteRecorderManagement;
 using SessionManagement;
-using SyllabusPlusPanopto.Transform.ApiWrappers;
-using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+using SyllabusPlusPanopto.Integration.ApiWrappers;
+using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort;
+namespace SyllabusPlusPanopto.Integration.To_Sort;
 
 internal sealed class SoapSessionApi : ISessionApi
 {

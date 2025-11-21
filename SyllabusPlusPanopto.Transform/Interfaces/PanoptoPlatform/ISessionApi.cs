@@ -1,10 +1,10 @@
-﻿using SyllabusPlusPanopto.Transform.To_Sort;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using SyllabusPlusPanopto.Integration.To_Sort;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+namespace SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
 public interface ISessionApi
 {

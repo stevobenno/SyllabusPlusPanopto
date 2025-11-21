@@ -1,9 +1,9 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyncRunContext = SyllabusPlusPanopto.Transform.To_Sort.SyncRunContext;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyncRunContext = SyllabusPlusPanopto.Integration.To_Sort.SyncRunContext;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces;
+namespace SyllabusPlusPanopto.Integration.Interfaces;
 
 public interface ISyncService
 {

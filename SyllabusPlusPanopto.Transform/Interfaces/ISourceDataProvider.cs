@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
-using SyllabusPlusPanopto.Transform.Domain;
+using SyllabusPlusPanopto.Integration.Domain;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces;
+namespace SyllabusPlusPanopto.Integration.Interfaces;
 
 public interface ISourceDataProvider
 {

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort;
+namespace SyllabusPlusPanopto.Integration.To_Sort;
 
 public class RestSessionApi : ISessionApi
 {

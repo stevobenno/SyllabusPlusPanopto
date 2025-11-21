@@ -1,4 +1,4 @@
-﻿namespace SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform
+﻿namespace SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform
 {
     /// <summary>
     /// Root abstraction for Panopto operations (swappable SOAP/REST).

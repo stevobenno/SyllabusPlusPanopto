@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+namespace SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
 /// <summary>
 /// Simple abstraction for HTTP transport (can be HttpClient, Refit, or your in-house wrapper).

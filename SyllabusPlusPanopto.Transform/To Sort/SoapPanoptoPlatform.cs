@@ -1,9 +1,9 @@
 ﻿using System;
-using SyllabusPlusPanopto.Transform.ApiWrappers;
-using SyllabusPlusPanopto.Transform.Interfaces.ApiWrappers;
-using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+using SyllabusPlusPanopto.Integration.ApiWrappers;
+using SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
+using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort;
+namespace SyllabusPlusPanopto.Integration.To_Sort;
 
 public sealed class SoapPanoptoPlatform : IPanoptoPlatform, IDisposable
 {

@@ -3,11 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using SyllabusPlusPanopto.Transform.Domain.Settings;
-using SyllabusPlusPanopto.Transform.Interfaces;
-using SyllabusPlusPanopto.Transform.To_Sort;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
+using SyllabusPlusPanopto.Integration.Interfaces;
+using SyllabusPlusPanopto.Integration.To_Sort;
 
-namespace SyllabusPlusPanopto.Transform
+namespace SyllabusPlusPanopto.Integration
 {
     /// <summary>
     /// Orchestrates Read → Transform → Sync. Host-agnostic.

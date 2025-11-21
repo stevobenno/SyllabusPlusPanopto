@@ -1,13 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SyllabusPlusPanopto.Transform;
-using SyllabusPlusPanopto.Transform.ApiWrappers;
-using SyllabusPlusPanopto.Transform.Domain.Settings;
-using SyllabusPlusPanopto.Transform.Implementations;
-using SyllabusPlusPanopto.Transform.Interfaces;
-using SyllabusPlusPanopto.Transform.Interfaces.ApiWrappers;
-using SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
-using SyllabusPlusPanopto.Transform.To_Sort;
+using SyllabusPlusPanopto.Integration;
+using SyllabusPlusPanopto.Integration.ApiWrappers;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
+using SyllabusPlusPanopto.Integration.Implementations;
+using SyllabusPlusPanopto.Integration.Interfaces;
+using SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
+using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
+using SyllabusPlusPanopto.Integration.To_Sort;
+using SyllabusPlusPanopto.Integration.TransformationServices;
 using System;
 
 
@@ -56,6 +57,14 @@ public static class SyncServiceRegistration
 
         // Orchestrator that the host actually calls
         services.AddSingleton<TimetabledEventSyncOrchestrator>();
+
+        services.AddSingleton<ITransformService, RouteOneTransformService>();
+        services.AddSingleton<ITimetabledEventSyncOrchestrator, TimetabledEventSyncOrchestrator>();
+        services.AddSingleton<ISyncService, PanoptoSyncService>();
+
+        services.AddSingleton<ISessionManagementWrapper, SessionManagementWrapper>();
+        services.AddSingleton<IRemoteRecorderManagementWrapper, RemoteRecorderManagementWrapper>();
+
 
         return services;
     }

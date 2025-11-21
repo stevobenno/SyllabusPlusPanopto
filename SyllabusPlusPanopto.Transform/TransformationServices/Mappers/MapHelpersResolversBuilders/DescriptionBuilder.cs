@@ -1,4 +1,4 @@
-﻿namespace SyllabusPlusPanopto.Transform.TransformationServices.Mappers.MapHelpersResolversBuilders
+﻿namespace SyllabusPlusPanopto.Integration.TransformationServices.Mappers.MapHelpersResolversBuilders
 {
     /// <summary>
     /// Reproduces the description logic from the spreadsheet:

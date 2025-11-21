@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ServiceModel;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort;
+namespace SyllabusPlusPanopto.Integration.To_Sort;
 
 public static class PanoptoEndpointBuilder
 {

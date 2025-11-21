@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.Interfaces;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces;
 
-namespace SyllabusPlusPanopto.Transform.TransformationServices
+namespace SyllabusPlusPanopto.Integration.TransformationServices
 {
     /// <summary>
     /// Horribly explicit, no-AutoMapper implementation of the spreadsheet rules.

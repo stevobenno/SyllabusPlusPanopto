@@ -1,9 +1,9 @@
 ﻿// SyllabusPlusPanopto.Infrastructure/Telemetry/IIntegrationTelemetry.cs
 
 using System;
-using SyllabusPlusPanopto.Transform.Domain;
+using SyllabusPlusPanopto.Integration.Domain;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces
+namespace SyllabusPlusPanopto.Integration.Interfaces
 {
     /// <summary>
     /// Abstraction over Application Insights so we can:

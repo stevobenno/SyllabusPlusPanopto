@@ -1,4 +1,4 @@
-﻿namespace SyllabusPlusPanopto.Transform.Domain.Settings;
+﻿namespace SyllabusPlusPanopto.Integration.Domain.Settings;
 
 public sealed class TelemetryOptions
 {

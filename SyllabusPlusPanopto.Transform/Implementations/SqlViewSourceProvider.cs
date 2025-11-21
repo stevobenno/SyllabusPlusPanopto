@@ -4,10 +4,10 @@ using System.Data;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Data.SqlClient;
-using SyllabusPlusPanopto.Transform.Domain;
-using SyllabusPlusPanopto.Transform.Interfaces;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces;
 
-namespace SyllabusPlusPanopto.Transform.Implementations
+namespace SyllabusPlusPanopto.Integration.Implementations
 {
     public sealed class SqlViewSourceProvider : ISourceDataProvider
     {
@@ -16,22 +16,26 @@ namespace SyllabusPlusPanopto.Transform.Implementations
 
         public SqlViewSourceProvider(string conn, string view)
         {
-            _conn = conn;
-            _view = view;
+            _conn = conn ?? throw new ArgumentNullException(nameof(conn));
+            _view = view ?? throw new ArgumentNullException(nameof(view));
         }
 
-        public async IAsyncEnumerable<SourceEvent> ReadAsync([EnumeratorCancellation] CancellationToken ct = default)
+        public async IAsyncEnumerable<SourceEvent> ReadAsync(
+            [EnumeratorCancellation] CancellationToken ct = default)
         {
             await using var con = new SqlConnection(_conn);
             await con.OpenAsync(ct);
 
-            // if your view name is trusted, this is fine, otherwise wrap/whitelist it
-            var sql = $"SELECT * FROM {_view}";
-            await using var cmd = new SqlCommand(sql, con) { CommandType = CommandType.Text };
+            // View name is assumed trusted / whitelisted in config.
+            var sql = $"SELECT top 500(*) FROM {_view}"; // todo
+            await using var cmd = new SqlCommand(sql, con)
+            {
+                CommandType = CommandType.Text
+            };
 
-            await using var rdr = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, ct);
+            await using var rdr = await cmd.ExecuteReaderAsync(
+                CommandBehavior.SequentialAccess, ct);
 
-            // cache ordinals once
             var ordActivityName = rdr.GetOrdinal("ActivityName");
             var ordModuleCode = rdr.GetOrdinal("ModuleCode");
             var ordModuleName = rdr.GetOrdinal("ModuleName");
@@ -50,7 +54,6 @@ namespace SyllabusPlusPanopto.Transform.Implementations
                 if (ct.IsCancellationRequested)
                     yield break;
 
-                // null-safe helpers
                 string GetString(int ord) =>
                     rdr.IsDBNull(ord) ? string.Empty : rdr.GetString(ord);
 
@@ -60,9 +63,7 @@ namespace SyllabusPlusPanopto.Transform.Implementations
                 TimeSpan GetTime(int ord)
                 {
                     if (rdr.IsDBNull(ord)) return TimeSpan.Zero;
-
-                    // assuming SQL column is of type time
-                    return rdr.GetTimeSpan(ord);
+                    return rdr.GetTimeSpan(ord); // assumes SQL type 'time'
                 }
 
                 int GetInt(int ord) =>

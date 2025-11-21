@@ -3,8 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SyllabusPlusPanopto.Integration;
 using SyllabusPlusPanopto.Shared;
-using SyllabusPlusPanopto.Transform;
 
 
 var host = Host.CreateDefaultBuilder(args)

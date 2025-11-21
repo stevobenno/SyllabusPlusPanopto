@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Security.Cryptography.X509Certificates;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort
+namespace SyllabusPlusPanopto.Integration.To_Sort
 {
     internal static class CertificateValidation
     {

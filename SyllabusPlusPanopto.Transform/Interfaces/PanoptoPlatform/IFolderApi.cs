@@ -1,9 +1,9 @@
-﻿using SyllabusPlusPanopto.Transform.Domain;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using SyllabusPlusPanopto.Integration.Domain;
 
-namespace SyllabusPlusPanopto.Transform.Interfaces.PanoptoPlatform;
+namespace SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
 /// <summary>
 /// Folder lookup by name or id.

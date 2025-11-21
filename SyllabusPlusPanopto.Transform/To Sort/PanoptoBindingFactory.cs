@@ -1,30 +1,29 @@
 ﻿using System;
 using System.ServiceModel;
-using Microsoft.Extensions.Options;
-using SyllabusPlusPanopto.Transform.Domain.Settings;
 
-namespace SyllabusPlusPanopto.Transform.To_Sort;
-
-public static class PanoptoBindingFactory
+namespace SyllabusPlusPanopto.Integration.To_Sort
 {
-    public static BasicHttpBinding Create(IOptions<PanoptoBindingOptions> optionsAccessor)
+    public sealed class PanoptoBindingFactory : IPanoptoBindingFactory
     {
-        var opts = optionsAccessor.Value;
-
-        var binding = new BasicHttpBinding(BasicHttpSecurityMode.Transport)
+        public BasicHttpBinding CreateBinding()
         {
-            SendTimeout = TimeSpan.FromSeconds(opts.SendTimeoutSeconds),
-            OpenTimeout = TimeSpan.FromSeconds(opts.OpenTimeoutSeconds),
-            ReceiveTimeout = TimeSpan.FromMinutes(opts.ReceiveTimeoutMinutes),
-            CloseTimeout = TimeSpan.FromSeconds(opts.CloseTimeoutSeconds),
+            var binding = new BasicHttpBinding(BasicHttpSecurityMode.Transport);
 
-            // Hard-coded, sensible defaults based on Panopto’s sample config
-            MaxReceivedMessageSize = 20_000_000
-        };
+            // Panopto SOAP limits + behaviour
+            binding.MaxReceivedMessageSize = 1024 * 1024 * 50; // 50MB
+            binding.MaxBufferSize = 1024 * 1024 * 50;
+            binding.MaxBufferPoolSize = 1024 * 1024 * 10;
 
-        binding.ReaderQuotas.MaxStringContentLength = 20_000_000;
-        binding.ReaderQuotas.MaxArrayLength = 20_000_000;
+            // Timeouts
+            binding.SendTimeout = TimeSpan.FromMinutes(2);
+            binding.ReceiveTimeout = TimeSpan.FromMinutes(5);
+            binding.OpenTimeout = TimeSpan.FromSeconds(30);
+            binding.CloseTimeout = TimeSpan.FromSeconds(30);
 
-        return binding;
+            // Allow large/complex SOAP payloads
+            binding.ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max;
+
+            return binding;
+        }
     }
 }
