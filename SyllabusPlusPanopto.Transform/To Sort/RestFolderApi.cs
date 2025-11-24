@@ -11,7 +11,7 @@ internal sealed class RestFolderApi : IFolderApi
     private readonly IRestClient _http;
     public RestFolderApi(IRestClient http) => _http = http;
 
-    public Task<FolderInfo?> GetByNameAsync(string folderName, CancellationToken ct)
+    public Task<FolderInfo?> GetFolderByQuery(string folderQuery, CancellationToken ct)
     {
         // var dto = await _http.GetAsync<FolderDto>($"folders?name={folderName}", ct);
         // return new FolderInfo(dto.Id, dto.Name);

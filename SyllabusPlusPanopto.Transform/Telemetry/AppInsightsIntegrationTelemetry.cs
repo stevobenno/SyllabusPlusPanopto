@@ -50,7 +50,7 @@ namespace SyllabusPlusPanopto.Integration.Telemetry
             var ev = new EventTelemetry("PanoptoSync.ItemSucceeded");
             ev.Properties["runId"] = runId;
             ev.Properties["title"] = session.Title ?? string.Empty;
-            ev.Properties["folder"] = session.FolderName ?? string.Empty;
+            ev.Properties["folder"] = session.ResolvedFolderName ?? string.Empty;
             ev.Properties["recorder"] = session.RecorderName ?? string.Empty;
             ev.Properties["owner"] = session.Owner ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(session.Hash))

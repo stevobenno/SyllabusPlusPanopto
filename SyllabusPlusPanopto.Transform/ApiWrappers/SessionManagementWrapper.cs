@@ -73,6 +73,105 @@ namespace SyllabusPlusPanopto.Integration.ApiWrappers
             return _folderByNameCache[key];
         }
 
+
+        public Folder GetFolderByQuery(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return null;
+
+            var key = query.ToLowerInvariant();
+
+            // Return from cache if discovered previously
+            if (_folderByNameCache.TryGetValue(key, out var cached))
+                return cached;
+
+            // 1. Exact match
+            var allFolders = GetAllMatchingFolders(query);
+
+
+            var exact = allFolders.FirstOrDefault(f =>
+                    string.Equals(f.Name, query, StringComparison.InvariantCultureIgnoreCase));
+
+            if (exact != null)
+                return CacheAndReturn(key, exact);
+
+            // 2. Substring match – the "real" CRN resolution
+            var contains = allFolders
+                .Where(f => f.Name.IndexOf(query, StringComparison.InvariantCultureIgnoreCase) >= 0)
+                .ToList();
+
+            if (contains.Count == 1)
+                return CacheAndReturn(key, contains[0]);
+
+            if (contains.Count > 1)
+            {
+                // Best-guess match rule:
+                // Prefer folder names *starting* with the query (CRN-style)
+                var starts = contains
+                    .Where(f => f.Name.StartsWith(query, StringComparison.InvariantCultureIgnoreCase))
+                    .ToList();
+
+                if (starts.Count == 1)
+                    return CacheAndReturn(key, starts[0]);
+
+                // Fall back to first sorted by length → most specific first
+                var chosen = contains
+                    .OrderBy(f => f.Name.Length)
+                    .First();
+
+                return CacheAndReturn(key, chosen);
+            }
+
+            // 3. No match
+            CacheAndReturn(key, null);
+            return null;
+        }
+
+        private Folder CacheAndReturn(string key, Folder f)
+        {
+            _folderByNameCache[key] = f;
+            if (f != null)
+                _folderByIdCache[f.Id] = f;
+            return f;
+        }
+
+        // GET ALL FOLDERS (cached across run)
+        private List<Folder> _allFolders;
+        private List<Folder> GetAllFolders()
+        {
+            if (_allFolders != null)
+                return _allFolders;
+
+            var results = new List<Folder>();
+
+            for (var page = 0; page < 1000; page++)
+            {
+                var pagination = new Pagination
+                {
+                    MaxNumberResults = ResultsPerPage,
+                    PageNumber = page
+                };
+
+                var response = _sessionManager.GetFoldersList(
+                    _authentication,
+                    new ListFoldersRequest
+                    {
+                        Pagination = pagination,
+                        WildcardSearchNameOnly = false  // <-- FULL listing, not filtered
+                    },
+                    null);
+
+                results.AddRange(response.Results);
+
+                if (results.Count >= response.TotalNumberResults)
+                    break;
+            }
+
+            _allFolders = results;
+            return _allFolders;
+        }
+
+
         private Folder GetChosenFolder(string folderName)
         {
             Folder result = null;

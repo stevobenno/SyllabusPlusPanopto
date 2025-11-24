@@ -35,7 +35,6 @@ namespace SyllabusPlusPanopto.Integration
             _log = log ?? throw new ArgumentNullException(nameof(log));
             _syncOptions = syncOptions?.Value ?? throw new ArgumentNullException(nameof(syncOptions));
         }
-
         public async Task RunAsync(CancellationToken ct = default)
         {
             var count = 0;
@@ -44,35 +43,60 @@ namespace SyllabusPlusPanopto.Integration
 
             var now = DateTime.UtcNow;
 
-            var listFromUtc = now.AddDays(-_syncOptions.LookbackDays);
-            var listToUtc = now;
+            var listFromUtc = now;
+            var listToUtc = now.AddDays(_syncOptions.SyncHorizonDays);
 
             var runCtx = new SyncRunContext(
-                DryRun: false,                                 
+                DryRun: false,
                 MinExpectedRows: _syncOptions.MinExpectedRows,
                 AllowDeletions: _syncOptions.AllowDeletions,
-                DeleteHorizonDays: _syncOptions.DeleteHorizonDays,
+                DeleteHorizonDays: _syncOptions.SyncHorizonDays, // TODO: clean this if needed
                 RunId: Guid.NewGuid().ToString("n"),
                 UtcNow: now,
                 ListFromUtc: listFromUtc,
                 ListToUtc: listToUtc
             );
 
+            // ===== RUN HEADER =====
             _log.LogInformation(
-                "Starting sync run {RunId}. Window: {From} → {To}. AllowDeletions={AllowDeletions}",
-                runCtx.RunId, runCtx.ListFromUtc, runCtx.ListToUtc, runCtx.AllowDeletions);
+                "\n" +
+                "=============================================================\n" +
+                "  S Y N C   R U N   S T A R T E D\n" +
+                "=============================================================\n" +
+                "  Run Id          : {RunId}\n" +
+                "  Dry Run         : {DryRun}\n" +
+                "  Allow Deletions : {AllowDeletions}\n" +
+                "  Horizon (days)  : {Horizon}\n" +
+                "  Min Rows (opt)  : {MinExpected}\n" +
+                "-------------------------------------------------------------\n" +
+                "  Window (UTC)    : {From} → {To}\n" +
+                "  Started At      : {Started}\n" +
+                "=============================================================",
+                runCtx.RunId,
+                runCtx.DryRun,
+                runCtx.AllowDeletions,
+                _syncOptions.SyncHorizonDays,
+                _syncOptions.MinExpectedRows?.ToString() ?? "n/a",
+                runCtx.ListFromUtc.ToString("yyyy-MM-dd HH:mm:ss"),
+                runCtx.ListToUtc.ToString("yyyy-MM-dd HH:mm:ss"),
+                runCtx.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            );
 
             await _sync.BeginRunAsync(runCtx, ct);
 
-            await foreach (var sourceEvent in _reader.ReadAsync(ct))
+            var events = _reader.ReadAsync(ct);
+
+            await foreach (var sourceEvent in events)
             {
                 ct.ThrowIfCancellationRequested();
                 count++;
 
                 try
                 {
-                    var mapped = _transform.Transform(sourceEvent);
-                    await _sync.SyncAsync(mapped, ct);
+
+                    var scheduledSession = _transform.Transform(sourceEvent);
+                    
+                    await _sync.SyncAsync(sourceEvent,scheduledSession, ct);
                     success++;
                 }
                 catch (Exception ex)
@@ -80,39 +104,62 @@ namespace SyllabusPlusPanopto.Integration
                     failed++;
 
                     _log.LogError(ex,
-                        "Failed to process row #{Row}. RawId={RawId}",
+                        "Run {RunId}: failed to process row #{Row}. RawId={RawId}",
+                        runCtx.RunId,
                         count,
                         sourceEvent?.StaffName);
-
                     // continue with the next item
                 }
 
                 if (count % 100 == 0)
                 {
-                    _log.LogInformation("Processed {Count} item(s). Success={Success} Failed={Failed}",
-                        count, success, failed);
+                    _log.LogInformation(
+                        "\n" +
+                        "-------------------------------------------------------------\n" +
+                        "  Progress Update for Run {RunId}\n" +
+                        "-------------------------------------------------------------\n" +
+                        "  Processed   : {Count} rows\n" +
+                        "  Successful  : {Success}\n" +
+                        "  Failed      : {Failed}\n" +
+                        "-------------------------------------------------------------",
+                        runCtx.RunId,
+                        count,
+                        success,
+                        failed
+                    );
                 }
             }
 
-            // Here you can enforce plausibility checks based on _syncOptions.MinExpectedRows
-            // and _syncOptions.AllowDeletions if you want to alter deletion behaviour.
-            //
-            // e.g.:
-            //
-            // if (_syncOptions.MinExpectedRows.HasValue &&
-            //     count < _syncOptions.MinExpectedRows.Value)
-            // {
-            //     _log.LogWarning(
-            //         "Row-count plausibility check failed: expected ≥ {Expected}, got {Actual}. " +
-            //         "Deletions should be suppressed for this run.",
-            //         _syncOptions.MinExpectedRows.Value, count);
-            // }
-
             await _sync.CompleteRunAsync(ct);
 
+            var completedAt = DateTime.UtcNow;
+            var duration = completedAt - runCtx.UtcNow;
+
+            // ===== RUN SUMMARY =====
             _log.LogInformation(
-                "Completed run {RunId}. Total={Total} Success={Success} Failed={Failed}",
-                runCtx.RunId, count, success, failed);
+                "\n" +
+                "=============================================================\n" +
+                "  S Y N C   R U N   C O M P L E T E\n" +
+                "=============================================================\n" +
+                "  Run Id          : {RunId}\n" +
+                "-------------------------------------------------------------\n" +
+                "  Total Rows      : {Total}\n" +
+                "  Successful      : {Success}\n" +
+                "  Failed          : {Failed}\n" +
+                "-------------------------------------------------------------\n" +
+                "  Started At (UTC): {Started}\n" +
+                "  Completed At    : {Completed}\n" +
+                "  Duration        : {DurationMs} ms\n" +
+                "=============================================================",
+                runCtx.RunId,
+                count,
+                success,
+                failed,
+                runCtx.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                completedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                (int)duration.TotalMilliseconds
+            );
         }
+
     }
 }

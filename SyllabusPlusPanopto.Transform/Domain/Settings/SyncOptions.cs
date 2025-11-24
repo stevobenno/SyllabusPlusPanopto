@@ -8,8 +8,8 @@ public sealed class SyncOptions
     public bool AllowDeletions { get; set; } = true;
 
   
-    public int DeleteHorizonDays { get; set; } = 7;
+    public int SyncHorizonDays { get; set; } = 140; // TODO: Config
 
   
-    public int LookbackDays { get; set; } = 7;
+    public int LookbackDays { get; set; } = 140;// TODO: Config
 }

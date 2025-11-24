@@ -11,7 +11,7 @@ namespace SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 public interface IFolderApi
 {
     /// <summary>Lookup by exact folder name (case-insensitive where supported). Returns null if not found.</summary>
-    Task<FolderInfo> GetByNameAsync(string folderName, CancellationToken ct);
+    Task<FolderInfo> GetFolderByQuery(string folderQuery, CancellationToken ct);
 
     /// <summary>Lookup by folder id. Returns null if not found.</summary>
     Task<FolderInfo?> GetByIdAsync(Guid id, CancellationToken ct);

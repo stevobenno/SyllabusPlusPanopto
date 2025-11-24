@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces;
+using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
+using System;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using SyllabusPlusPanopto.Integration.Domain;
-using SyllabusPlusPanopto.Integration.Interfaces;
-using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
 namespace SyllabusPlusPanopto.Integration.To_Sort
 {
@@ -14,64 +15,132 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
     {
         private readonly IPanoptoPlatform _platform;
         private readonly IWorkingStore _store;
-        private readonly ILogger<PanoptoSyncService> _log;
+        private readonly ILogger<PanoptoSyncService> _logger;
 
         private SyncRunContext _ctx = default!;
         private int _read, _upserts, _unchanged, _errors;
 
-        public PanoptoSyncService(IPanoptoPlatform platform, IWorkingStore store, ILogger<PanoptoSyncService> log)
+        public PanoptoSyncService(
+            IPanoptoPlatform platform,
+            IWorkingStore store,
+            ILogger<PanoptoSyncService> logger)
         {
             _platform = platform;
             _store = store;
-            _log = log;
+            _logger = logger;
         }
 
+        // ========================================================================
+        //  P H A S E   1 —   B E G I N   R U N
+        // ========================================================================
         public async Task BeginRunAsync(SyncRunContext ctx, CancellationToken ct = default)
         {
             _ctx = ctx;
             _read = _upserts = _unchanged = _errors = 0;
 
-            // 1) Start run
+            _logger.LogInformation(
+                "\n" +
+                "=====================================================================\n" +
+                "   S Y N C   R U N   I N I T I A T I O N\n" +
+                "=====================================================================\n" +
+                "  Run ID           : {RunId}\n" +
+                "  Dry Run          : {DryRun}\n" +
+                "  Allow Deletions  : {AllowDeletions}\n" +
+                "  Horizon (days)   : {Horizon}\n" +
+                "  Window (UTC)     : {From}  →  {To}\n" +
+                "  Started At       : {Started}\n" +
+                "=====================================================================",
+                ctx.RunId,
+                ctx.DryRun,
+                ctx.AllowDeletions,
+                ctx.DeleteHorizonDays,
+                ctx.ListFromUtc.ToString("yyyy-MM-dd HH:mm:ss"),
+                ctx.ListToUtc.ToString("yyyy-MM-dd HH:mm:ss"),
+                ctx.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            );
+
             await _store.BeginRunAsync(ctx.RunId, ctx.UtcNow, ct);
 
-            // 2) Enumerate existing sessions in scope and seed the in-memory store
-            var existing = await _platform.Sessions.ListScheduledAsync(ctx.ListFromUtc, ctx.ListToUtc, ct);
-            if (_store is InMemoryWorkingStore mem)
-                mem.SeedExisting(existing);
+            _logger.LogInformation(
+                "\n------------------------------\n" +
+                "  Phase 1A: Getting Existing Panopto Sessions\n" +
+                "------------------------------"
+            );
 
-            _log.LogInformation("Sync run {RunId} started. Seeded {Count} existing sessions from Panopto.", ctx.RunId, existing.Count);
+            var returned = await _platform.Sessions.ListScheduledAsync(
+                ctx.ListFromUtc.AddDays(-20),
+                ctx.ListToUtc,
+                ct);
+
+            int seeded = 0;
+            int aliens = 0;
+
+            if (_store is InMemoryWorkingStore mem)
+            {
+                // Seed S+ sessions and register alien sessions
+                mem.SeedExisting(returned, out seeded, out aliens);
+
+                // Housekeeping: delete alien sessions *before* we do anything else.
+                // For now this is always enabled; later this can be driven by config.
+                await HousekeepAlienSessionsAsync(mem, ctx, enableAlienPurge: true, ct);
+            }
+            else
+            {
+                // Fallback counts in case a different store implementation is plugged in.
+                seeded = returned.Count(r => !string.IsNullOrWhiteSpace(r.ExternalId));
+                aliens = returned.Count(r => string.IsNullOrWhiteSpace(r.ExternalId));
+            }
+
+            _logger.LogInformation(
+                "  Returned : {ReturnedCount}\n" +
+                "  Seeded   : {SeededCount} (ExternalId present)\n" +
+                "  Aliens   : {AlienCount} (no ExternalId; candidates for pre-sync purge)\n" +
+                "------------------------------\n",
+                returned.Count,
+                seeded,
+                aliens
+            );
         }
 
-        public async Task SyncAsync(ScheduledSession s, CancellationToken ct = default)
+        // ========================================================================
+        //  P H A S E   2 —   P E R - E V E N T   S Y N C
+        // ========================================================================
+        public async Task SyncAsync(SourceEvent source, ScheduledSession scheduled, CancellationToken ct)
         {
             _read++;
 
             try
             {
-                var externalId = ComputeHash(s);
-                s.Hash = externalId;
+                var externalId = ComputeExternalId(source);
+                scheduled.Hash = externalId;
 
-                // mark seen early
+                if (string.IsNullOrWhiteSpace(externalId))
+                    throw new InvalidOperationException(
+                        "Unable to compute ExternalId from source event.");
+
                 await _store.MarkSeenAsync(_ctx.RunId, externalId, externalId, ct);
 
-                // If a session with this ExternalId already exists in Panopto, treat as unchanged/updatable
                 var already = await _store.GetHashAsync(externalId, ct);
+
                 if (already != null)
                 {
                     _unchanged++;
 
+                    _logger.LogDebug("Existing match for ExternalId {ExtId}", externalId);
+
                     if (!_ctx.DryRun)
                     {
-                        // Optionally refresh owner/externalId/availability if desired:
-                        // We need the sessionId to do that; fetch from store mapping.
                         var ids = await _store.GetSessionIdsByExternalIdsAsync(new[] { externalId }, ct);
                         if (ids.Length == 1)
                         {
                             var id = ids[0];
+
                             await _platform.Sessions.SetExternalIdAsync(id, externalId, ct);
-                            if (!string.IsNullOrWhiteSpace(s.Owner))
-                                await _platform.Sessions.SetOwnerAsync(id, s.Owner, ct);
-                            await _platform.Sessions.SetAvailabilityStartAsync(id, s.StartTimeUtc, ct);
+
+                            if (!string.IsNullOrWhiteSpace(scheduled.Owner))
+                                await _platform.Sessions.SetOwnerAsync(id, scheduled.Owner, ct);
+
+                            await _platform.Sessions.SetAvailabilityStartAsync(id, scheduled.StartTimeUtc, ct);
                         }
                     }
 
@@ -80,46 +149,64 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
 
                 if (_ctx.DryRun)
                 {
-                    _log.LogInformation("DRYRUN Create {Title} [{ExtId}]", s.Title, externalId);
+                    _logger.LogInformation("DRYRUN → Create '{Title}' [{ExtId}]",
+                        scheduled.Title, externalId);
+
                     await _store.UpsertHashAsync(externalId, externalId, _ctx.UtcNow, ct);
                     _upserts++;
                     return;
                 }
 
-                // Resolve folder
-                var folder = TryParseGuid(s.FolderName, out var fid)
-                    ? await _platform.Folders.GetByIdAsync(fid, ct)
-                    : await _platform.Folders.GetByNameAsync(s.FolderName, ct);
+                _logger.LogDebug("Resolving folder for '{Title}' → query '{FolderQuery}'",
+                    scheduled.Title, scheduled.FolderQuery);
+
+                var folder = await _platform.Folders.GetFolderByQuery(scheduled.FolderQuery, ct);
 
                 if (folder is null)
-                    throw new InvalidOperationException($"Folder not found for '{s.FolderName}' (Title '{s.Title}')");
+                {
+                    _errors++;
 
-                // Resolve recorder
-                var rec = await _platform.Recorders.GetByNameAsync(s.RecorderName, ct);
-                if (rec is null)
-                    throw new InvalidOperationException($"Recorder not found: '{s.RecorderName}'");
+                    _logger.LogError(
+                        "\n------------------------------\n" +
+                        "  Folder resolution failed for event\n" +
+                        "  Title       : {Title}\n" +
+                        "  FolderQuery : {FolderQuery}\n" +
+                        "  ExternalId  : {ExtId}\n" +
+                        "  Action      : SKIPPED — no folder found\n" +
+                        "------------------------------",
+                        scheduled.Title,
+                        scheduled.FolderQuery,
+                        scheduled.Hash
+                    );
 
-                // Schedule
+                    return; // ← Skip this one, continue processing others
+                }
+
+                var recorder = await _platform.Recorders.GetByNameAsync(scheduled.RecorderName, ct);
+                if (recorder is null)
+                    throw new InvalidOperationException(
+                        $"Recorder not found: '{scheduled.RecorderName}'");
+
                 var result = await _platform.Sessions.ScheduleAsync(
-                    title: s.Title,
+                    title: scheduled.Title,
                     folderId: folder.Id,
-                    webcast: s.Webcast == 1,
-                    startUtc: s.StartTimeUtc,
-                    endUtc: s.EndTimeUtc,
-                    recorderIds: new[] { rec.Id },
+                    webcast: scheduled.Webcast == 1,
+                    startUtc: scheduled.StartTimeUtc,
+                    endUtc: scheduled.EndTimeUtc,
+                    recorderIds: new[] { recorder.Id },
                     overwrite: true,
                     ct);
 
                 if (!result.Success || result.SessionId is null)
-                    throw new InvalidOperationException($"Schedule failed: {result.LogLine}");
+                    throw new InvalidOperationException(
+                        $"Schedule failed: {result.LogLine}");
 
                 var sessionId = result.SessionId.Value;
 
-                // Metadata
                 await _platform.Sessions.SetExternalIdAsync(sessionId, externalId, ct);
-                if (!string.IsNullOrWhiteSpace(s.Owner))
-                    await _platform.Sessions.SetOwnerAsync(sessionId, s.Owner, ct);
-                await _platform.Sessions.SetAvailabilityStartAsync(sessionId, s.StartTimeUtc, ct);
+                if (!string.IsNullOrWhiteSpace(scheduled.Owner))
+                    await _platform.Sessions.SetOwnerAsync(sessionId, scheduled.Owner, ct);
+                await _platform.Sessions.SetAvailabilityStartAsync(sessionId, scheduled.StartTimeUtc, ct);
 
                 await _store.UpsertHashAsync(externalId, externalId, _ctx.UtcNow, ct);
                 _upserts++;
@@ -127,33 +214,59 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
             catch (Exception ex)
             {
                 _errors++;
-                _log.LogError(ex, "Sync failed for {Title}", s?.Title ?? "(null)");
+
+                _logger.LogError(
+                    ex,
+                    "\n------------------------------\n" +
+                    "  Sync Error: '{Title}'\n" +
+                    "  ExternalId : {ExtId}\n" +
+                    "------------------------------",
+                    scheduled.Title,
+                    scheduled.Hash
+                );
             }
         }
 
+        // ========================================================================
+        //  P H A S E   3 —   C O M P L E T E   R U N
+        // ========================================================================
         public async Task CompleteRunAsync(CancellationToken ct = default)
         {
             var allowDeletes = _ctx.AllowDeletions;
+
             if (_ctx.MinExpectedRows.HasValue && _read < _ctx.MinExpectedRows.Value)
             {
                 allowDeletes = false;
-                _log.LogWarning("Low-water guard: Read={Read} Min={Min}. Skipping deletions.", _read, _ctx.MinExpectedRows);
+
+                _logger.LogWarning(
+                    "\n*** Low-water guard triggered ***\n" +
+                    "Read={Read}  Expected≥{Expected}\n" +
+                    "→ Deletions suppressed.",
+                    _read,
+                    _ctx.MinExpectedRows.Value
+                );
             }
 
-            var toDeleteExternalIds = allowDeletes
-                ? await _store.GetKeysNotSeenThisRunAsync(_ctx.RunId, _ctx.DeleteHorizonDays, _ctx.UtcNow, ct)
+            var orphanIds = allowDeletes
+                ? await _store.GetKeysNotSeenThisRunAsync(
+                    _ctx.RunId,
+                    _ctx.DeleteHorizonDays,
+                    _ctx.UtcNow,
+                    ct)
                 : Array.Empty<string>();
 
-            var deleted = 0;
-            if (toDeleteExternalIds.Length > 0)
+            int deleted = 0;
+
+            if (orphanIds.Length > 0)
             {
                 if (_ctx.DryRun)
                 {
-                    _log.LogInformation("DRYRUN would delete {Count} session(s).", toDeleteExternalIds.Length);
+                    _logger.LogInformation("DRYRUN → would delete {Count} sessions", orphanIds.Length);
                 }
                 else
                 {
-                    var ids = await _store.GetSessionIdsByExternalIdsAsync(toDeleteExternalIds, ct);
+                    var ids = await _store.GetSessionIdsByExternalIdsAsync(orphanIds, ct);
+
                     if (ids.Length > 0)
                     {
                         await _platform.Sessions.DeleteAsync(ids, ct);
@@ -162,28 +275,129 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
                 }
             }
 
-            await _store.CompleteRunAsync(_ctx.RunId, _read, _upserts, _unchanged, _errors, deleted, ct);
-            _log.LogInformation("Run {RunId} complete Read={R} Upserts={U} Unchanged={N} Errors={E} Deleted={D} DryRun={Dry}",
-                _ctx.RunId, _read, _upserts, _unchanged, _errors, deleted, _ctx.DryRun);
+            await _store.CompleteRunAsync(_ctx.RunId,
+                _read, _upserts, _unchanged, _errors, deleted, ct);
+
+            _logger.LogInformation(
+                "\n=====================================================================\n" +
+                "   S Y N C   R U N   C O M P L E T E D\n" +
+                "=====================================================================\n" +
+                "  Run ID         : {RunId}\n" +
+                "---------------------------------------------------------------------\n" +
+                "  Read           : {Read}\n" +
+                "  Upserts        : {Up}\n" +
+                "  Unchanged      : {Unchg}\n" +
+                "  Errors         : {Err}\n" +
+                "  Deleted        : {Del}\n" +
+                "---------------------------------------------------------------------\n" +
+                "  Dry Run        : {DryRun}\n" +
+                "  Finished At    : {Now}\n" +
+                "=====================================================================",
+                _ctx.RunId,
+                _read, _upserts, _unchanged, _errors,
+                deleted,
+                _ctx.DryRun,
+                DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+            );
         }
 
-        private static bool TryParseGuid(string value, out Guid id) => Guid.TryParse(value, out id);
-
-        private static string ComputeHash(ScheduledSession s)
+        /// <summary>
+        /// Computes a compact, deterministic ExternalId for a Syllabus+ event.
+        /// 
+        /// We use MD5 (128-bit) truncated to 96 bits (12 bytes → 24 hex chars).
+        /// This comfortably fits Panopto's undocumented 40-character ExternalId limit,
+        /// while leaving ample space for prefixes or metadata in future.
+        /// 
+        /// -----------------------------
+        /// Collision Risk (Birthday Bound)
+        /// -----------------------------
+        /// For a 96-bit hash, the probability of a natural collision after hashing N items is:
+        ///     P ≈ N² / 2^97
+        ///
+        /// Even with a pessimistic upper bound of:
+        ///     N = 1,000,000 (one million scheduled events)
+        ///
+        /// the collision probability is:
+        ///     P ≈ 6.3 × 10⁻¹⁸
+        ///
+        /// i.e. roughly:
+        ///     1 in 158,000,000,000,000,000
+        ///     (one in 158 quadrillion)
+        ///
+        /// This is far below any reasonable risk tolerance for a
+        /// non-financial, non-security scheduling system such as Panopto.
+        /// In practical terms, a collision is effectively impossible.
+        /// </summary>
+        private static string ComputeExternalId(SourceEvent e)
         {
-            var sb = new StringBuilder(256);
-            sb.AppendLine(s.Title);
-            sb.AppendLine(s.StartTimeUtc.ToString("O"));
-            sb.AppendLine(s.EndTimeUtc.ToString("O"));
-            sb.AppendLine(s.FolderName);
-            sb.AppendLine(s.RecorderName);
-            sb.AppendLine(s.Webcast == 1 ? "1" : "0");
-            sb.AppendLine(s.Owner);
-            sb.AppendLine(s.Description);
+            var sb = new StringBuilder();
+            sb.AppendLine(e.ModuleCRN);
+            sb.AppendLine(e.StartDate.ToString("yyyy-MM-dd"));
+            sb.AppendLine(e.StartTime.ToString(@"hh\:mm\:ss"));
+            sb.AppendLine(e.LocationName);
+            sb.AppendLine(e.ActivityName);
+            sb.AppendLine(e.StaffUserName);
 
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString()));
-            return Convert.ToHexString(bytes);
+            using var md5 = MD5.Create();
+            var full = md5.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString()));
+
+            // Truncate to 12 bytes (96 bits)
+            var slice = new byte[12];
+            Array.Copy(full, slice, 12);
+
+            return Convert.ToHexString(slice);  // 24 chars
         }
+
+        /// <summary>
+        /// Housekeeping step executed before any Syllabus+ reconciliation:
+        ///   • Identifies "alien" Panopto sessions (those with no ExternalId)
+        ///   • Logs them
+        ///   • Deletes them up-front (unless DryRun or purge disabled)
+        /// </summary>
+        private async Task HousekeepAlienSessionsAsync(
+            InMemoryWorkingStore mem,
+            SyncRunContext ctx,
+            bool enableAlienPurge,
+            CancellationToken ct)
+        {
+            if (!enableAlienPurge)
+            {
+                _logger.LogInformation(
+                    "Alien session purge is disabled by configuration. " +
+                    "No pre-sync deletions will be performed.");
+                return;
+            }
+
+            var aliens = mem.GetAlienSessionIds();
+            if (aliens.Length == 0)
+            {
+                _logger.LogInformation(
+                    "No alien Panopto sessions detected in the current window. " +
+                    "Pre-sync purge not required.");
+                return;
+            }
+
+            if (ctx.DryRun)
+            {
+                _logger.LogWarning(
+                    "DRYRUN → would delete {Count} alien Panopto session(s) " +
+                    "before Syllabus+ reconciliation.",
+                    aliens.Length);
+                return;
+            }
+
+            _logger.LogWarning(
+                "\n------------------------------\n" +
+                "  Pre-sync purge: deleting {Count} alien Panopto session(s).\n" +
+                "  Rule: any scheduled session in horizon with no ExternalId\n" +
+                "        is treated as non-Syllabus+ and removed.\n" +
+                "------------------------------",
+                aliens.Length);
+
+            await _platform.Sessions.DeleteAsync(aliens, ct);
+        }
+
+        private static bool TryParseGuid(string value, out Guid id)
+            => Guid.TryParse(value, out id);
     }
 }

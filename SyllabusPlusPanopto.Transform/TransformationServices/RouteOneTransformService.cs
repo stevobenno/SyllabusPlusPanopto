@@ -110,7 +110,7 @@ namespace SyllabusPlusPanopto.Integration.TransformationServices
                 StartTimeUtc = startUtc,
                 EndTimeUtc = endUtc,
                 RecorderName = recorder,
-                FolderName = folder,
+                FolderQuery = folder,
                 Description = description,
                 Webcast = webcast,
                 Owner = owner,

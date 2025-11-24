@@ -6,6 +6,8 @@ namespace SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
 public interface ISessionManagementWrapper
 {
     Folder GetFolderByName(string folderName);
+
+    Folder GetFolderByQuery(string query);
     Folder GetFolderById(Guid id);
     Session[] GetSessionsInDateRange(DateTime start, DateTime end);
     Session[] GetSessionById(Guid id);

@@ -1,19 +1,42 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
-using SyllabusPlusPanopto.Integration.ApiWrappers;
 using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
 using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
-namespace SyllabusPlusPanopto.Integration.To_Sort;
-
-internal sealed class SoapRecorderApi : IRecorderApi
+namespace SyllabusPlusPanopto.Integration.To_Sort
 {
-    private readonly RemoteRecorderManagementWrapper _rrm;
-    public SoapRecorderApi(RemoteRecorderManagementWrapper rrm) => _rrm = rrm;
-
-
-    public Task<RecorderInfo> GetByNameAsync(string recorderName, CancellationToken ct)
+    public  class SoapRecorderApi : IRecorderApi
     {
-        throw new System.NotImplementedException();
+        private readonly IRemoteRecorderManagementWrapper _rrm;
+
+        public SoapRecorderApi(IRemoteRecorderManagementWrapper rrm)
+        {
+            _rrm = rrm ?? throw new ArgumentNullException(nameof(rrm));
+        }
+
+        public Task<RecorderInfo?> GetByNameAsync(string recorderName, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(recorderName))
+                throw new ArgumentException("Recorder name is required", nameof(recorderName));
+
+            // Thin pass through to your existing wrapper
+            var settings = _rrm.GetSettingsByRecorderName(recorderName);
+
+            if (settings is null)
+            {
+                // no recorder with that name
+                return Task.FromResult<RecorderInfo?>(null);
+            }
+
+            // Adjust this mapping to whatever RecorderInfo actually contains
+            var info = new RecorderInfo(
+                settings.RecorderId,
+                recorderName
+            );
+
+            return Task.FromResult<RecorderInfo?>(info);
+        }
     }
 }

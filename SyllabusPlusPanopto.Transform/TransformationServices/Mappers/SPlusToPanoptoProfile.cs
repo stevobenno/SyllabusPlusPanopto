@@ -101,7 +101,7 @@ namespace SyllabusPlusPanopto.Integration.TransformationServices.Mappers
                 //   - #SPLUS events go to staff personal if present, else default
                 //   - otherwise convention-based module folder name, else default
                 // ------------------------------------------------------------------
-                .ForMember(d => d.FolderName,
+                .ForMember(d => d.FolderQuery,
                     m => m.MapFrom(s => FolderNameBuilder.FromSyllabusPlus(s.ModuleCRN, s.StaffUserName)))
 
                 // ------------------------------------------------------------------

@@ -3,18 +3,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using SyllabusPlusPanopto.Integration.ApiWrappers;
 using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Interfaces.ApiWrappers;
 using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 
 namespace SyllabusPlusPanopto.Integration.To_Sort;
 
-internal sealed class SoapFolderApi : IFolderApi
+public  class SoapFolderApi : IFolderApi
 {
-    private readonly SessionManagementWrapper _sm;
-    public SoapFolderApi(SessionManagementWrapper sm) => _sm = sm;
+    private readonly ISessionManagementWrapper _sm;
+    public SoapFolderApi(ISessionManagementWrapper sm) => _sm = sm;
 
-    public Task<FolderInfo?> GetByNameAsync(string folderName, CancellationToken ct)
+    public Task<FolderInfo?> GetFolderByQuery(string folderQuery, CancellationToken ct)
     {
-        var f = _sm.GetFolderByName(folderName);
+        var f = _sm.GetFolderByQuery(folderQuery);
         return Task.FromResult(f is null ? null : new FolderInfo(f.Id, f.Name) as FolderInfo);
     }
 

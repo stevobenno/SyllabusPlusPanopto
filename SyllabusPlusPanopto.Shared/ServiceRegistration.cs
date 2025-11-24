@@ -58,12 +58,23 @@ public static class SyncServiceRegistration
         // Orchestrator that the host actually calls
         services.AddSingleton<TimetabledEventSyncOrchestrator>();
 
+
+        // if then logic
         services.AddSingleton<ITransformService, RouteOneTransformService>();
+        // sexy automapper transformation
+        //services.AddSingleton<ITransformService, AutoMapperTransformService>();
+
         services.AddSingleton<ITimetabledEventSyncOrchestrator, TimetabledEventSyncOrchestrator>();
         services.AddSingleton<ISyncService, PanoptoSyncService>();
 
+
+        services.AddSingleton<IPanoptoBindingFactory, PanoptoBindingFactory>();
         services.AddSingleton<ISessionManagementWrapper, SessionManagementWrapper>();
         services.AddSingleton<IRemoteRecorderManagementWrapper, RemoteRecorderManagementWrapper>();
+        services.AddSingleton<IWorkingStore, InMemoryWorkingStore>();
+        services.AddSingleton<ISessionApi, SoapSessionApi>();
+        services.AddSingleton<IFolderApi, SoapFolderApi>();
+        services.AddSingleton<IRecorderApi, SoapRecorderApi>(); 
 
 
         return services;

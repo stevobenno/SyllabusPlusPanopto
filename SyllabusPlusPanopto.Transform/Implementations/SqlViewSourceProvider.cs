@@ -4,38 +4,39 @@ using System.Data;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Options;
 using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
 using SyllabusPlusPanopto.Integration.Interfaces;
 
 namespace SyllabusPlusPanopto.Integration.Implementations
 {
     public sealed class SqlViewSourceProvider : ISourceDataProvider
     {
-        private readonly string _conn;
-        private readonly string _view;
+        private readonly SourceOptions _options;
 
-        public SqlViewSourceProvider(string conn, string view)
+        public SqlViewSourceProvider(IOptions<SourceOptions> opts)
         {
-            _conn = conn ?? throw new ArgumentNullException(nameof(conn));
-            _view = view ?? throw new ArgumentNullException(nameof(view));
+            _options = opts.Value ?? throw new ArgumentNullException(nameof(opts));
+
+            if (string.IsNullOrWhiteSpace(_options.SqlConnectionString))
+                throw new InvalidOperationException("Source.SqlConnectionString is required.");
+
+            if (string.IsNullOrWhiteSpace(_options.SqlViewName))
+                throw new InvalidOperationException("Source.SqlViewName is required.");
         }
 
-        public async IAsyncEnumerable<SourceEvent> ReadAsync(
-            [EnumeratorCancellation] CancellationToken ct = default)
+        public async IAsyncEnumerable<SourceEvent> ReadAsync([EnumeratorCancellation] CancellationToken ct = default)
         {
-            await using var con = new SqlConnection(_conn);
+            await using var con = new SqlConnection(_options.SqlConnectionString);
             await con.OpenAsync(ct);
 
-            // View name is assumed trusted / whitelisted in config.
-            var sql = $"SELECT top 500(*) FROM {_view}"; // todo
-            await using var cmd = new SqlCommand(sql, con)
-            {
-                CommandType = CommandType.Text
-            };
+            var sql = $"SELECT * FROM {_options.SqlViewName}";
+            await using var cmd = new SqlCommand(sql, con);
 
-            await using var rdr = await cmd.ExecuteReaderAsync(
-                CommandBehavior.SequentialAccess, ct);
+            await using var rdr = await cmd.ExecuteReaderAsync(CommandBehavior.SequentialAccess, ct);
 
+            // Cache ordinals
             var ordActivityName = rdr.GetOrdinal("ActivityName");
             var ordModuleCode = rdr.GetOrdinal("ModuleCode");
             var ordModuleName = rdr.GetOrdinal("ModuleName");
@@ -54,34 +55,19 @@ namespace SyllabusPlusPanopto.Integration.Implementations
                 if (ct.IsCancellationRequested)
                     yield break;
 
-                string GetString(int ord) =>
-                    rdr.IsDBNull(ord) ? string.Empty : rdr.GetString(ord);
-
-                DateTime GetDate(int ord) =>
-                    rdr.IsDBNull(ord) ? DateTime.MinValue : rdr.GetDateTime(ord);
-
-                TimeSpan GetTime(int ord)
-                {
-                    if (rdr.IsDBNull(ord)) return TimeSpan.Zero;
-                    return rdr.GetTimeSpan(ord); // assumes SQL type 'time'
-                }
-
-                int GetInt(int ord) =>
-                    rdr.IsDBNull(ord) ? 0 : rdr.GetInt32(ord);
-
                 yield return new SourceEvent(
-                    ActivityName: GetString(ordActivityName),
-                    ModuleCode: GetString(ordModuleCode),
-                    ModuleName: GetString(ordModuleName),
-                    ModuleCRN: GetString(ordModuleCRN),
-                    StaffName: GetString(ordStaffName),
-                    StartDate: GetDate(ordStartDate),
-                    StartTime: GetTime(ordStartTime),
-                    EndTime: GetTime(ordEndTime),
-                    LocationName: GetString(ordLocationName),
-                    RecorderName: GetString(ordRecorderName),
-                    RecordingFactor: GetInt(ordRecordingFactor),
-                    StaffUserName: GetString(ordStaffUserName)
+                    ActivityName: rdr.IsDBNull(ordActivityName) ? "" : rdr.GetString(ordActivityName),
+                    ModuleCode: rdr.IsDBNull(ordModuleCode) ? "" : rdr.GetString(ordModuleCode),
+                    ModuleName: rdr.IsDBNull(ordModuleName) ? "" : rdr.GetString(ordModuleName),
+                    ModuleCRN: rdr.IsDBNull(ordModuleCRN) ? "" : rdr.GetString(ordModuleCRN),
+                    StaffName: rdr.IsDBNull(ordStaffName) ? "" : rdr.GetString(ordStaffName),
+                    StartDate: rdr.IsDBNull(ordStartDate) ? DateTime.MinValue : rdr.GetDateTime(ordStartDate),
+                    StartTime: rdr.IsDBNull(ordStartTime) ? TimeSpan.Zero : rdr.GetTimeSpan(ordStartTime),
+                    EndTime: rdr.IsDBNull(ordEndTime) ? TimeSpan.Zero : rdr.GetTimeSpan(ordEndTime),
+                    LocationName: rdr.IsDBNull(ordLocationName) ? "" : rdr.GetString(ordLocationName),
+                    RecorderName: rdr.IsDBNull(ordRecorderName) ? "" : rdr.GetString(ordRecorderName),
+                    RecordingFactor: rdr.IsDBNull(ordRecordingFactor) ? 0 : rdr.GetInt32(ordRecordingFactor),
+                    StaffUserName: rdr.IsDBNull(ordStaffUserName) ? "" : rdr.GetString(ordStaffUserName)
                 );
             }
         }

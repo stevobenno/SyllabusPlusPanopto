@@ -8,6 +8,8 @@ namespace SyllabusPlusPanopto.Integration.Interfaces;
 public interface ISyncService
 {
     Task BeginRunAsync(SyncRunContext ctx, CancellationToken ct = default);
-    Task SyncAsync(ScheduledSession session, CancellationToken ct = default);
+
+    Task SyncAsync(SourceEvent source, ScheduledSession scheduled, CancellationToken ct);
+
     Task CompleteRunAsync(CancellationToken ct = default);
 }
