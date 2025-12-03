@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SyllabusPlusPanopto.Integration.Domain;
+using SyllabusPlusPanopto.Integration.Domain.Settings;
 using SyllabusPlusPanopto.Integration.Interfaces;
 using SyllabusPlusPanopto.Integration.Interfaces.PanoptoPlatform;
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,6 +19,7 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
         private readonly IPanoptoPlatform _platform;
         private readonly IWorkingStore _store;
         private readonly ILogger<PanoptoSyncService> _logger;
+        private readonly IOptions<SyncOptions> _syncOptions;
 
         private SyncRunContext _ctx = default!;
         private int _read, _upserts, _unchanged, _errors;
@@ -23,11 +27,12 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
         public PanoptoSyncService(
             IPanoptoPlatform platform,
             IWorkingStore store,
-            ILogger<PanoptoSyncService> logger)
+            ILogger<PanoptoSyncService> logger, IOptions<SyncOptions> syncOptions)
         {
             _platform = platform;
             _store = store;
             _logger = logger;
+            _syncOptions = syncOptions;
         }
 
         // ========================================================================
@@ -68,7 +73,7 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
             );
 
             var returned = await _platform.Sessions.ListScheduledAsync(
-                ctx.ListFromUtc.AddDays(-20),
+                ctx.ListFromUtc,
                 ctx.ListToUtc,
                 ct);
 
@@ -82,7 +87,7 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
 
                 // Housekeeping: delete alien sessions *before* we do anything else.
                 // For now this is always enabled; later this can be driven by config.
-                await HousekeepAlienSessionsAsync(mem, ctx, enableAlienPurge: true, ct);
+                await HousekeepAlienSessionsAsync(mem, ctx, enableAlienPurge: _syncOptions.Value.EnableAlienPurge, ct);
             }
             else
             {
@@ -182,10 +187,26 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
                     return; // ← Skip this one, continue processing others
                 }
 
-                var recorder = await _platform.Recorders.GetByNameAsync(scheduled.RecorderName, ct);
-                if (recorder is null)
-                    throw new InvalidOperationException(
-                        $"Recorder not found: '{scheduled.RecorderName}'");
+
+                // Rob says we don't need necessarily to do this.
+                // I kind of like it. It's quite belt and bracesy.
+                // But what if it gives false negatives?
+                // We'll find out any second once we start splatting the recorder in anyway. So let's just do that.
+
+                //var recorder = await _platform.Recorders.GetByNameAsync(scheduled.RecorderName, ct);
+                //if (recorder is null)
+                //    throw new InvalidOperationException(
+                //        $"Recorder not found: '{scheduled.RecorderName}'");
+
+                //var result = await _platform.Sessions.ScheduleAsync(
+                //    title: scheduled.Title,
+                //    folderId: folder.Id,
+                //    webcast: scheduled.Webcast == 1,
+                //    startUtc: scheduled.StartTimeUtc,
+                //    endUtc: scheduled.EndTimeUtc,
+                //    recorderIds: new[] { recorder.Id },
+                //    overwrite: true,
+                //    ct);
 
                 var result = await _platform.Sessions.ScheduleAsync(
                     title: scheduled.Title,
@@ -193,9 +214,10 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
                     webcast: scheduled.Webcast == 1,
                     startUtc: scheduled.StartTimeUtc,
                     endUtc: scheduled.EndTimeUtc,
-                    recorderIds: new[] { recorder.Id },
+                    recorderIds: new[] { Guid.Parse("27064ea5-034b-4043-9395-b31300b2cce6"),  },
                     overwrite: true,
                     ct);
+
 
                 if (!result.Success || result.SessionId is null)
                     throw new InvalidOperationException(
@@ -354,6 +376,25 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
         ///   • Logs them
         ///   • Deletes them up-front (unless DryRun or purge disabled)
         /// </summary>
+        /// <summary>
+        /// Pre-sync alien session inspection.
+        ///
+        /// "Aliens" = scheduled Panopto sessions in the current horizon that have no ExternalId,
+        /// so they are not known to this S+ feed.
+        ///
+        /// Behaviour:
+        ///   • If enableAlienPurge is false: do nothing except log that inspection is disabled.
+        ///   • If there are zero aliens: log and return.
+        ///   • If ctx.DryRun is true: log how many alien sessions would have been acted on,
+        ///     but do not call the Panopto API.
+        ///   • If ctx.DryRun is false: currently we only log the count and a short explanation.
+        ///     The old hard delete behaviour has been intentionally disabled after it was found
+        ///     to hit personal and non-S+ sessions.
+        ///
+        /// Note: The config flag SyncOptions.EnableAlienPurge now effectively means
+        /// "enable alien detection and logging". Physical deletion is not performed
+        /// in this version.
+        /// </summary>
         private async Task HousekeepAlienSessionsAsync(
             InMemoryWorkingStore mem,
             SyncRunContext ctx,
@@ -363,8 +404,9 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
             if (!enableAlienPurge)
             {
                 _logger.LogInformation(
-                    "Alien session purge is disabled by configuration. " +
-                    "No pre-sync deletions will be performed.");
+                    "Alien session inspection is disabled by configuration. " +
+                    "No pre-sync checks or deletions will be performed.");
+                await Task.CompletedTask;
                 return;
             }
 
@@ -373,29 +415,41 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
             {
                 _logger.LogInformation(
                     "No alien Panopto sessions detected in the current window. " +
-                    "Pre-sync purge not required.");
+                    "Pre-sync alien inspection completed with zero candidates.");
+                await Task.CompletedTask;
                 return;
             }
 
             if (ctx.DryRun)
             {
                 _logger.LogWarning(
-                    "DRYRUN → would delete {Count} alien Panopto session(s) " +
-                    "before Syllabus+ reconciliation.",
+                    "DRYRUN → detected {Count} alien Panopto session(s) " +
+                    "with no ExternalId in the current horizon. " +
+                    "They would be candidates for clean-up in a destructive mode.",
                     aliens.Length);
+                await Task.CompletedTask;
                 return;
             }
 
             _logger.LogWarning(
                 "\n------------------------------\n" +
-                "  Pre-sync purge: deleting {Count} alien Panopto session(s).\n" +
-                "  Rule: any scheduled session in horizon with no ExternalId\n" +
-                "        is treated as non-Syllabus+ and removed.\n" +
+                "  Pre-sync alien inspection\n" +
+                "  Detected {Count} alien Panopto session(s) with no ExternalId.\n" +
+                "  Rule (non-destructive mode): any scheduled session in horizon\n" +
+                "        with no ExternalId is treated as non-S+ and is logged only.\n" +
+                "  No deletions are performed in this build.\n" +
                 "------------------------------",
                 aliens.Length);
 
-            await _platform.Sessions.DeleteAsync(aliens, ct);
+            // Important: deletion intentionally disabled for now.
+            // To re-enable in future, guard this call behind a separate, explicit
+            // config flag such as SyncOptions.EnableAlienDeletion and update docs.
+            //
+            // await _platform.Sessions.DeleteAsync(aliens, ct);
+
+            await Task.CompletedTask;
         }
+
 
         private static bool TryParseGuid(string value, out Guid id)
             => Guid.TryParse(value, out id);

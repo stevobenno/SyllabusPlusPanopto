@@ -49,7 +49,7 @@ namespace SyllabusPlusPanopto.Integration.ApiWrappers
 
             var endpoint = PanoptoEndpointBuilder.BuildEndpoint(
                 _settings.BaseUrl,
-                _settings.SessionManagementPath);
+                _settings.RemoteRecorderManagementPath);
 
             _remoteRecorderManager = new RemoteRecorderManagementClient(binding, endpoint);
 

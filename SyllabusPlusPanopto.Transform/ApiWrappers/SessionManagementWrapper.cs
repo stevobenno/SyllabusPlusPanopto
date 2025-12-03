@@ -74,6 +74,29 @@ namespace SyllabusPlusPanopto.Integration.ApiWrappers
         }
 
 
+        public void UpdateSessionOwner(Guid[] sessionIds, string ownerUserKey)
+        {
+            if (sessionIds == null || sessionIds.Length == 0) return;
+            if (string.IsNullOrWhiteSpace(ownerUserKey)) return;
+
+            _sessionManager.UpdateSessionOwner(
+                _authentication,
+                sessionIds,
+                ownerUserKey);
+        }
+
+        public void UpdateSessionsAvailabilityStart(Guid[] sessionIds, DateTime availabilityUtc)
+        {
+            if (sessionIds == null || sessionIds.Length == 0) return;
+
+            _sessionManager.UpdateSessionsAvailabilityStartSettings(
+                _authentication,
+                sessionIds,
+                SessionStartSettingType.SpecificDate,
+                availabilityUtc);
+        }
+
+
         public Folder GetFolderByQuery(string query)
         {
             if (string.IsNullOrWhiteSpace(query))

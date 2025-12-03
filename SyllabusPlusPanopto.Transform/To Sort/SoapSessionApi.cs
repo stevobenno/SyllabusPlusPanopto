@@ -59,23 +59,30 @@ namespace SyllabusPlusPanopto.Integration.To_Sort
                 new ScheduleResult(ok, sid, Array.Empty<Guid>(), log));
         }
 
-        public Task SetOwnerAsync(Guid sessionId, string owner, CancellationToken ct)
-        {
-            // TODO: implement when ownership needs to be driven via API
-            return Task.CompletedTask;
-        }
-
         public Task SetExternalIdAsync(Guid sessionId, string externalId, CancellationToken ct)
         {
             _sm.UpdateSessionExternalId(sessionId, externalId);
             return Task.CompletedTask;
         }
 
-        public Task SetAvailabilityStartAsync(Guid sessionId, DateTime startUtc, CancellationToken ct)
+
+        public Task SetOwnerAsync(Guid sessionId, string owner, CancellationToken ct)
         {
-            // TODO: implement if/when availability is managed from here
+            if (sessionId == Guid.Empty) return Task.CompletedTask;
+            if (string.IsNullOrWhiteSpace(owner)) return Task.CompletedTask;
+
+            _sm.UpdateSessionOwner(new[] { sessionId }, owner);
             return Task.CompletedTask;
         }
+
+        public Task SetAvailabilityStartAsync(Guid sessionId, DateTime startUtc, CancellationToken ct)
+        {
+            if (sessionId == Guid.Empty) return Task.CompletedTask;
+
+            _sm.UpdateSessionsAvailabilityStart(new[] { sessionId }, startUtc);
+            return Task.CompletedTask;
+        }
+
 
         public Task DeleteAsync(IEnumerable<Guid> sessionIds, CancellationToken ct)
         {

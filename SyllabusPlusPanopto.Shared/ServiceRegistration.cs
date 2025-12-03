@@ -25,6 +25,8 @@ public static class SyncServiceRegistration
         // Bind options
         services.Configure<SourceOptions>(config.GetSection("Source"));
         services.Configure<PanoptoOptions>(config.GetSection("Panopto"));
+        services.Configure<SyncOptions>(config.GetSection("Sync"));
+
 
         // Decide input source (this is where your SourceKind enum is used)
         var sourceKind = config.GetValue<SourceKind>("Source:Kind");

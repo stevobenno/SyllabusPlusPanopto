@@ -13,6 +13,9 @@ public interface ISessionManagementWrapper
     Session[] GetSessionById(Guid id);
     bool TryGetSessionId(string sessionName, out Guid sessionId);
 
+    void UpdateSessionOwner(Guid[] sessionIds, string ownerUserKey);
+    void UpdateSessionsAvailabilityStart(Guid[] sessionIds, DateTime availabilityUtc);
+
     /// <summary>
     /// Returns the current ExternalId for a single session (string.Empty if not found).
     /// </summary>
@@ -45,6 +48,8 @@ public interface ISessionManagementWrapper
     bool AppendProcessedMarker(Guid sessionId, string markerPrefix, string timestampFormat = "o");
 
     bool DeleteSessions(Guid[] sessionIds);
+
+
     bool IsOverlap(DateTime start1, DateTime end1, DateTime start2, DateTime end2);
     void Dispose();
 }

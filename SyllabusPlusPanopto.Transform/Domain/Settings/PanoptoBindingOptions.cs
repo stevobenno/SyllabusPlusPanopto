@@ -8,3 +8,6 @@ public sealed  class PanoptoBindingOptions
     public int ReceiveTimeoutMinutes { get; set; } = 30;
     public int CloseTimeoutSeconds { get; set; } = 60;
 }
+
+   
+
